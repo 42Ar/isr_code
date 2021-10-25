@@ -3,7 +3,7 @@
 
 using namespace std;
 
-static const unsigned int N = 8, M = 4, maxL = 44;
+static const unsigned int N = 8, M = 4, maxL = 44; // we assume M < N
 static const unsigned int minL = (max(N, M + 1) + 1)/2*2;
 
 typedef uint64_t code_t;
@@ -37,9 +37,9 @@ void pyprint(unsigned int L, code_t c){
 __attribute__((optimize("unroll-loops"), always_inline)) inline void check(unsigned int L, code_t c){
     code_t mask = (code_t(1) << L) - 1;
     c = (c << L) | c;
-    for(unsigned int delta = 1; delta <= M; delta++){
+    for(unsigned int delta = 1; delta <= M; delta++){ // 181 machine instructions for code check at N = 8 and M = 4
         code_t c0 = c ^ (c >> delta);
-        for(unsigned int k = 1; k < N; k++){
+        for(unsigned int k = delta; k < N; k++){
             code_t c1 = c >> k;
             code_t c2 = c >> (delta + k);
             if(__builtin_popcountll((c1 ^ c2 ^ c0) & mask) != L/2){
