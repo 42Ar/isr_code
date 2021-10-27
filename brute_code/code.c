@@ -59,7 +59,6 @@ int main(){
         auto start = chrono::system_clock::now();
         //#pragma omp parallel for
         for(code_t c = code_t(1) << (L - 1); code_t(c) < (code_t(1) << L); c += 2){
-            print(L, c);
             check(L, c);
         }
         auto end = chrono::system_clock::now();
