@@ -3,7 +3,7 @@
 
 using namespace std;
 
-static const unsigned int N = 8, M = 4, maxL = 44; // we assume M < N
+static const unsigned int N = 4, M = 2, maxL = 44; // we assume M < N
 static const unsigned int minL = (max(N, M + 1) + 1)/2*2;
 
 typedef uint64_t code_t;
@@ -57,14 +57,15 @@ int main(){
     for(unsigned int L = minL; L <= maxL; L += 2){
         cout << "L: " << L << endl;
         auto start = chrono::system_clock::now();
-        #pragma omp parallel for
-        for(code_t c = code_t(1) << (L - 1); code_t(c) < (code_t(1) << L); c++){
+        //#pragma omp parallel for
+        for(code_t c = code_t(1) << (L - 1); code_t(c) < (code_t(1) << L); c += 2){
+            print(L, c);
             check(L, c);
         }
         auto end = chrono::system_clock::now();
         int elapsed = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
         if(elapsed > 0){
-            cout << "codes per sec " << 1000*((code_t(1) << L) - (code_t(1) << (L - 1)))/elapsed << "e6" << endl;
+            cout << "codes per sec " << 500*((code_t(1) << L) - (code_t(1) << (L - 1)))/elapsed << "e6" << endl;
         }
     }
 }
