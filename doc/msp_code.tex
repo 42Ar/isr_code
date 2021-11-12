@@ -37,7 +37,7 @@ bottom=1cm,
 \pagenumbering{gobble}
 \begin{figure}[h!]
 	\centering
-	\includegraphics[width=0.9\linewidth]{code_diagram.pdf}
+	\includegraphics[width=0.8\linewidth]{code_diagram.pdf}
 \end{figure}
 We assume that the radar code $\epsilon$ is periodic $\epsilon_i = \epsilon_{i + L}$ and has already been transmitted for some time and that the radar continues transmitting the code indefinitely.
 According to the sketch above, we see that
@@ -54,7 +54,7 @@ where we have used the fact that signals from range gates of different altitudes
 Furthermore, we have introduced $\Delta \in [1, M]$, where $M$ is the total number of measurement points in the auto correlation function.
 Those will have the (desired) spacing of \SI{0.8}{\ms}.
 The auto correlation function is defined as $\langle (V_{j+\Delta}^{(k)})^* V_j^{(k)} \rangle = R^{(k)}_\Delta$ assuming a wide sense stationary process for at least the time it takes to send the entire code once, which is $T = L\cdot\SI{0.8}{\ms}$.
-We find for the auto correlation function at height $h$
+We find for the auto correlation function at height $h \in [0, N-1]$
 $$
 R^{(h)}_\Delta = \langle \epsilon_{j + \Delta}m_{j + \Delta + h}^* \epsilon_j^*m_{j+h}\rangle - \sum_{k=0, k\neq h}^{N-1} \epsilon_{j + \Delta}\epsilon_j^* \epsilon_{j+\Delta+h-k}^*\epsilon_{j+h-k} R_\Delta^{(k)}.
 $$
@@ -62,16 +62,16 @@ In order to make the last term disappear we must average over the entire code to
 $$
 \hat{R}^{(h)}_\Delta = \frac{1}{L}\sum^L_{j=1}\langle \epsilon_{j + \Delta}m_{j + \Delta + h}^* \epsilon_j^*m_{j + h}\rangle - \sum_{k=0, k \neq h}^{N-1}  R_\Delta^{(k)} \left[ \frac{1}{L} \sum^L_{j=0} \epsilon_{j + \Delta} \epsilon_j^*\epsilon_{j+\Delta+h-k}^*\epsilon_{j+h-k} \right]
 $$
-and demand that (with $W > w = k + H_1 - h + 1 > 0$ where $h \in [H_0, H_1]$ and $W=N+H_1 - H_0 + 1$)
+and demand that (with $w = k - h \neq 0$ so that $|w| < N$)
 $$
 \frac{1}{L} \sum^L_{j=1} \epsilon_{j + \Delta} \epsilon_j^*\epsilon_{j+\Delta-w}^*\epsilon_{j-w} = 0.
 $$
-Due to technical limitations of the radar we have $\epsilon_i \in [-1, 1]$ and a naive brute force algorithm finds the following (shortest) codes for a given $W$ and $M$
+Due to technical limitations of the radar we have $\epsilon_i \in [-1, 1]$ and a naive brute force algorithm finds the following (shortest) codes for a given $N$ and $M$
 \begin{center}
 	\centering
 	\begin{tabular}{cccc}
 		\toprule
-		$L$&$W$&$M$&Code\\
+		$L$&$N$&$M$&Code\\
 		\midrule
 		24&5&4&$-+-+++++++-++--+-++-+++-$\\
 		32&6&5&$-++-++++++++---++---+----++-+---$\\
@@ -79,5 +79,5 @@ Due to technical limitations of the radar we have $\epsilon_i \in [-1, 1]$ and a
 		\bottomrule
 	\end{tabular}
 \end{center}
-Note that for $H_1 = H_0 = 0$ we can use that $k\neq h$ and find $W=N$.
+Note that we have used that every code which is valid for $w$ is also valid for $-w$, because the value of the sum does not change if the code is shifted by $w$, due to the codes periodicity.
 \end{document}
