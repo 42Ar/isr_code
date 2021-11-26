@@ -31,13 +31,13 @@ bottom=1cm,
 
 \begin{document}
 \begin{center}
-	\textbf{\Large{A Simple Radar Code for the Low Altitude Ionosphere}}\\
+	\textbf{\Large{A high duty cycle general purpose radar code}}\\
 	\small{Frank Hermann, 24.10.2021}
 \end{center}
 \pagenumbering{gobble}
 \begin{figure}[h!]
 	\centering
-	\includegraphics[width=0.8\linewidth]{code_diagram.pdf}
+	\includegraphics[width=0.7\linewidth]{code_diagram.pdf}
 \end{figure}
 We assume that the radar code $\epsilon$ is periodic $\epsilon_i = \epsilon_{i + L}$ and has already been transmitted for some time and that the radar continues transmitting the code indefinitely.
 According to the sketch above, we see that
@@ -75,7 +75,9 @@ Due to technical limitations of the radar we have $\epsilon_i \in [-1, 1]$ and a
 		\midrule
 		24&5&4&$-+-+++++++-++--+-++-+++-$\\
 		32&6&5&$-++-++++++++---++---+----++-+---$\\
+		32&8&3&$-+--++++++++-+---+--++++--+++---$\\
 		40&7&4&$-+--+++++++++-+++--+-+++----+-+++--++++-$\\
+		48&8&5&$--++++++++-+-+--+--+-++--+---+----++---++-+----+$\\
 		\bottomrule
 	\end{tabular}
 \end{center}
