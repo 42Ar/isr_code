@@ -6,66 +6,376 @@
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{listings}
+\usepackage{hyperref}
 \usepackage{siunitx}
 \usepackage{url}
-\usepackage
-[
-a4paper,% other options: a3paper, a5paper, etc
-left=1cm,
-right=1cm,
-top=1cm,
-bottom=1cm,
-% use vmargin=2cm to make vertical margins equal to 2cm.
-% us  hmargin=3cm to make horizontal margins equal to 3cm.
-% use margin=3cm to make all margins  equal to 3cm.
-]
-{geometry}
 
 \author{Frank Hermann}
-\title{Comparison of Radar Stations for MSP Measurements}
+\title{Radar code documentation}
 
 \DeclareMathOperator{\sgn}{sgn}
 \renewcommand{\d}[1]{\ensuremath{\operatorname{d}\!{#1}}}
 \setlength\parindent{0pt}
 
-
 \begin{document}
-\begin{center}
-	\textbf{\Large{A high duty cycle general purpose radar code}}\\
-	\small{Frank Hermann, 24.10.2021}
-\end{center}
-\pagenumbering{gobble}
-\begin{figure}[h!]
+\maketitle
+\begin{figure}
 	\centering
-	\includegraphics[width=0.7\linewidth]{code_diagram.pdf}
+	\includegraphics[width=1\linewidth]{code_diagram.pdf}
+	\caption{Range time diagram of the simplified version of the radar code.}
+	\label{fig:sketch}
 \end{figure}
-We assume that the radar code $\epsilon$ is periodic $\epsilon_i = \epsilon_{i + L}$ and has already been transmitted for some time and that the radar continues transmitting the code indefinitely.
-According to the sketch above, we see that
-$$
+
+\section{Introduction}
+A binary phase radar code is presented which has optimal noise canceling properties, intrinsically measures the entire range at once (assuming that it is finite) and supports arbitrary radar duty cycles.
+\section{Mathematical description}
+We assume that the radar code $\epsilon$ has length $L$ and is periodic $\epsilon_i = \epsilon_{i + L}$.
+Furthermore, the radar code is normalized and binary phase, meaning that $\epsilon_i \in [-1, 1]$.
+This implies that $\epsilon_i^*\epsilon_i = 1$, where we could drop the complex conjugate symbol, but we will keep it to show that the formalism also applies to poly-phase codes.
+We further assume that the radar code is transmitted indefinitely.\\
+Figure \ref{fig:sketch} illustrates the measurement process of the unmodulated code.
+In the figure, it can be seen that the measured voltage $m_i$ at time index $i$ can be calculated by summing over the scattered voltages $V^{(k)}_i$ which are modulated with the radar code,
+\begin{equation}
 \sum_{k=0}^{N-1} \epsilon_{i-k} V^{(k)}_i = m_i
-$$
-where $m_i$ is the $i$-th measured voltage and $N$ is the total number of range gates considered along the radar beam.
-We calculate
-\begin{align*}
-\langle \epsilon_{j + \Delta}m_{j + \Delta + h}^* \epsilon_j^*m_{j+h}\rangle &= \epsilon_{j + \Delta}\epsilon_j^* \sum_{k=0}^{N-1} \epsilon_{j+\Delta+h-k}^*\epsilon_{j+h-k} \langle (V^{(k)}_{j + \Delta})^*V^{(k)}_j \rangle\\
-&= \langle (V_{j+\Delta}^{(h)})^* V_j^{(h)} \rangle + \epsilon_{j + \Delta}\epsilon_j^*\sum_{k=0,k\neq h}^{N-1} \epsilon_{j+\Delta+h-k}^*\epsilon_{j+h-k} \langle (V^{(k)}_{j + \Delta})^*V^{(k)}_j \rangle
-\end{align*}
-where we have used the fact that signals from range gates of different altitudes do not correlate and assumed that $\epsilon_i^*\epsilon_i = 1$.
-Furthermore, we have introduced $\Delta \in [1, M]$, where $M$ is the total number of measurement points in the auto correlation function.
-Those will have the (desired) spacing of \SI{0.8}{\ms}.
-The auto correlation function is defined as $\langle (V_{j+\Delta}^{(k)})^* V_j^{(k)} \rangle = R^{(k)}_\Delta$ assuming a wide sense stationary process for at least the time it takes to send the entire code once, which is $T = L\cdot\SI{0.8}{\ms}$.
-We find for the auto correlation function at height $h \in [0, N-1]$
-$$
-R^{(h)}_\Delta = \langle \epsilon_{j + \Delta}m_{j + \Delta + h}^* \epsilon_j^*m_{j+h}\rangle - \sum_{k=0, k\neq h}^{N-1} \epsilon_{j + \Delta}\epsilon_j^* \epsilon_{j+\Delta+h-k}^*\epsilon_{j+h-k} R_\Delta^{(k)}.
-$$
-In order to make the last term disappear we must average over the entire code to find the unbiased estimator
-$$
-\hat{R}^{(h)}_\Delta = \frac{1}{L}\sum^L_{j=1}\langle \epsilon_{j + \Delta}m_{j + \Delta + h}^* \epsilon_j^*m_{j + h}\rangle - \sum_{k=0, k \neq h}^{N-1}  R_\Delta^{(k)} \left[ \frac{1}{L} \sum^L_{j=0} \epsilon_{j + \Delta} \epsilon_j^*\epsilon_{j+\Delta+h-k}^*\epsilon_{j+h-k} \right]
-$$
-and demand that (with $w = k - h \neq 0$ so that $|w| < N$)
-$$
-\frac{1}{L} \sum^L_{j=1} \epsilon_{j + \Delta} \epsilon_j^*\epsilon_{j+\Delta-w}^*\epsilon_{j-w} = 0.
-$$
+\end{equation}
+where $N$ is the maximum altitude index considered and $k$ is the altitude index.
+Note that $N$ must be finite.\\
+Now, the estimator
+\begin{equation}
+\hat{R}^{(h)}_\Delta = \frac{1}{L}\sum^L_{j=1}\epsilon_{j + \Delta}m_{j + \Delta + h}^* \epsilon_j^*m_{j + h}.
+\end{equation}
+for the autocorrelation function $R$ at altitude $h$ and lag $\Delta$ is considered.
+In the following, it will be shown that this estimator is unbiased, if the code fulfills a certain condition.\\
+We calculate the expectation value of the estimator
+\begin{equation}
+\langle \hat{R}^{(h)}_\Delta \rangle
+=\frac{1}{L}\sum^L_{j=1} \epsilon_{j + \Delta}\epsilon_j^* \sum_{k=0}^{N-1} \epsilon_{j+\Delta+h-k}^*\epsilon_{j+h-k} \langle (V^{(k)}_{j + \Delta})^*V^{(k)}_j \rangle
+\end{equation}
+where the double sum was reduced to a single sum symbol, because scattered voltages of different altitudes do not correlate.
+Now, we use the definition of the autocorrelation function $\langle (V_{j+\Delta}^{(k)})^* V_j^{(k)} \rangle = R^{(k)}_\Delta$, where we assume a wide sense stationary process during the time it takes to transmit the code once.
+\begin{equation}
+\langle \hat{R}^{(h)}_\Delta \rangle
+= R^{(h)}_\Delta + \sum_{k=0,k\neq h}^{N-1}R^{(k)}_\Delta
+\left[ \frac{1}{L}\sum^L_{j=1}\epsilon_{j + \Delta}\epsilon_j^* \epsilon_{j+\Delta+h-k}^*\epsilon_{j+h-k}\right].
+\end{equation}
+The estimator is unbiased if the expression in the square brackets is zero.
+Let $w = k - h$ and note that $w \neq 0$ and $|w| < N$.
+Using the periodicity it can be shown that the condition is equivalent to
+\begin{equation}
+0 = \frac{1}{L}\sum^L_{j=1}\epsilon_{j}\epsilon_{j+w}^* \epsilon_{j+\Delta}^*\epsilon_{j + \Delta + w}.
+\label{eq:cond}
+\end{equation}
+In the next section, solutions of this equation are discussed.
+
+\section{Solving the code condition}
+The condition given by \eqref{eq:cond} is trivially fulfilled for pseudo random numbers if $L \rightarrow \infty$.
+However, the measurement would have no (definitive) time resolution in this case.
+With a brute-force computer search it can be shown that solutions do exist, when a finite $\Delta \in [1, M]$ is assumed, where $M$ is the total number of measurement points in the auto correlation function.
+If a code fulfills the condition it will be referred to as a valid code.
+Note that an inversion or a (cyclic) shift of any valid code is also a valid code.
+Thus, only codes which start with a $+$ (or $-$) must be checked.
+Further, all codes which do not contain the sequence $+-$ must be a constant sequence.
+Thus is sufficient to check codes which start with $+$ and end with $-$.
+However there are still many codes which are cyclic versions of other codes.
+
+\subsection{Number of codes}
+For each $L$ periodic code, there are $L$ shifted versions, but how many $L$ periodic codes are there?
+If $L=6$ there are also $2^3$ $3$-periodic codes and $2^2$ $2$-periodic codes.
+However, in both cases we must subtract the amount of $1$ periodic codes, yielding the recursive equation
+\begin{equation}
+N_6 = 2^6 - N_3 - N_2
+\end{equation}
+where $N_L$ is the number of $L$ periodic codes.
+The general equation is
+\begin{equation}
+N_L = 2^L - \sum_{i \in D(L)} N_i
+\end{equation}
+where $D(L)$ is the set of even divisors of $L$.
+
+\subsection{Building the codes}
+We will introduce the compressed notation of a code here.
+For example: 11001110 is 2231 in the compressed notation.
+We want to generate codes which do not
+\begin{enumerate}
+	\item have a periodicity smaller than $L$,
+	\item exist multiple times as shifted versions and
+	\item exist another time as inverted version.
+\end{enumerate}
+If we generate a code from its compressed version we can ensure the last condition by starting always with $-$ (or $+$).
+To ensure (2) we must realize that the number of digits in the compressed version must also be even so that the code does not start and end with the same sign.
+Furthermore, any code has a longest sequence $\omega$ of ones.
+In the case that the code contains a sequence of zeros longer than the longest sequence of ones, we consider its inverse.
+We can always place this sequence at the beginning, which means that in the compressed version the largest digit always comes first.
+However, a sequence of length $\omega$ might occur multiple times in the code, which can lead to a violation of (1).
+The solution is to split the code so that each sub-sequence starts with $\omega$ and the digits which follow are itself a sequence of the type discussed here.
+
+6
+51
+42
+33
+2211
+111111
+
+\subsection{The autocorrelation of a code}
+
+Let
+\begin{equation}
+\gamma_{j, i} = \epsilon_{j + i}^*\epsilon_{j}
+\end{equation}
+so that the autocorrelation function of the code can be written as
+\begin{equation}
+s_i = \sum_{j=1}^{L}\gamma_{j, i}.
+\end{equation}
+We want to satisfy conditions of the type $s_i=0$ for certain values of $i$, which requires solving the inverse problem, which is, calculating $\epsilon$ given a certain $\gamma$.
+The recursive equation
+\begin{equation}
+\epsilon_{j + i}^* = \gamma_{j, i} \epsilon_{j}
+\end{equation}
+follows directly from the definition of $\gamma$.
+It can be solved by plugging it into itself till $\epsilon_j$ is encountered again, which yields the following condition for the existence of a solution
+\begin{equation}
+\gamma_{k, i} = \prod_{j=1}^{L/d - 1}\gamma_{jd + k, i}
+\end{equation}
+where $d=d(i)$ is the greatest common denominator of $L$ and $i$ and $k \in [1, d]$.
+Thus, we have $d$ conditions, which removes $d$ degrees of freedom from $\gamma_{j, i}$, meaning that for each value of $i$, a number of $L-d$ bits can be chosen arbitrarily without violating the condition above.\\
+We have now formally solved the problem for a single, fixed value of $i$.
+In order to satisfy a problem in which two values of $i$ are allowed, called $i_1$ and $i_2$, we calculate the sets of corresponding solutions $\gamma_{j, i}$ and $\gamma'_{j, i'}$ first.
+
+\begin{equation}
+s'_i s_i = \sum_{j'=1}^{L}\sum_{j=1}^{L}\gamma'_{j', i}\gamma_{j, i}.
+\end{equation}
+
+\subsection{Connections between $\gamma$}
+\begin{equation}
+\gamma_{j, i_1}\gamma_{j, i_2} = \epsilon_{j + i_2}^*\epsilon_{j}\epsilon_{j + i_1}^*\epsilon_{j} = \gamma_{j+i_1, i_2-i_1}
+\end{equation}
+\begin{equation}
+\gamma_{j+i, i}\gamma_{j, i}=\gamma_{j, 2i}
+\end{equation}
+\newpage
+if the code did not have a sequence 111 it is not necessarily periodic, but it must be under the condition that there is a balance of positive and negative contributions to the sum
+
+in compressed form each digit must be smaller than 3
+111111111111212122222211
+because we must fulfill $\Delta = w = 1$ 1X1 contributes +1, 12 and 21
+
+in a simple compressed form two adjacent 0 symbols are not allowed
+101010100
+111111101
+
+01: 10, 0
+10: 1, 01
+
+
+no optimization $2^6$
+with double one in the beginning $2^4$
+6
+51
+42, 411 (411 not valid! (cyclic shift))
+321, 312 (not valid! cyclic shift!), 3111
+21111
+111111
+with cyclic elimination $2^3$
+8
+3221, 3122, 3212, 31121
+
+31122312
+
+
+in a code of length $L$ are $2^{N-m+1}$ combinations with $m$ or more equal bits in a row. this 
+
++-+-++-+++
+
+fourie like decomposition (walsh matrices?)
+
+decomposition into products of codes (advantage: stays on ring)
++++++- => +++++-
+++++-- => ++++--
++++--- => +++-+-
+++---- => ++-+--, ++--+-
++----- => +-+-+-
+each row is only allowed to combine (by multiply) with uneven number of rows above it
+
+different approach: build each code out of periodic codes, for example take a 3 and a 2 periodic code, will have maximum periodicity of 6
++-+-+- (1 periodicity)
+++--++ (2 periodicity)
++--+--, +++--- (3 periodicity)
+
++----+----, ++---++---, +++++---- (5 periodicity for L=10)
+
+there are even and uneven n-periodicity codes or should we change the definition of periodicity?
+
+
+n periodicity times m periodicity code is a n*m periodicity code
+
+If $\epsilon_i = \epsilon_{i+j}$ we will call the code $j$ periodic, thus
+$\epsilon_i\epsilon_{i+nj} = 1$
+
+when code has length L, the code can NOT be expressed as a product of codes which lengths are the prime factors of L.
+
++-+-+- (2)
+++-++- (3)
++---++ (6)
+
+++-- (satisfies j=1)
+
+solutions for even j can be constructed easily
++++- (satisfies j=2)
++++-++-+ (satisfies j=4)
++-+--+-+
+how can they be joined? simple multiplication???
+
+
+the code +---- is already a basis for all codes of the same length
+
+take a look at period discrete convolution
+
+
+\begin{equation}
+a_{i_1}b_{i_2}a_{i_1+j}b_{i_2+j}
+\end{equation}
+
+\begin{equation}
+s_j = \sum_{i=1}^{L} a_i a_{i+j} = -L
+\end{equation}
+if $a_i$ is $j$ periodic
+
+
+\begin{equation}
+s_j = \sum_{i=1}^{L} a_ib_i a_{i+j} b_{i+j} = - \sum_{i=1}^{L} b_i b_{i+j}
+\end{equation}
+if $a$ is $j$ periodic, thus it is not necessary to consider any $j$ periodic components if $s_j=0$ is demanded.
+\begin{equation}
+s_j = \sum_{i=1}^{L} (a_i + a_{i+j})^2 b_i  b_{i+j} = - \sum_{i=1}^{L} b_i b_{i+j}
+\end{equation}
+
+\begin{equation}
+s_j = \sum_{i=1}^{L} \epsilon_i \epsilon_{i+j} = \sum_{i=1}^{L} |\epsilon_i + \epsilon_{i+j}| - 1 \geq 2 W - L
+\end{equation}
+
+\begin{equation}
+W = \sum_{i=1}^{L} \epsilon_i \leq (s_j + L)/2
+\end{equation}
+
+\section{Modulating the code}
+
+\section{Code with cyclic difference set for $\tau_i$}
+
+\section{Properties of the code}
+
+
+
+\section{Simulation}
+\subsection{Monte Carlo Generation}
+The most straight-forward approach to generate random numbers following a wide-sense stationary process is as follows:
+\begin{equation}
+R^{(h)}_{jk} = \langle (V_{j}^{(h)})^* V_k^{(h)} \rangle
+\end{equation}
+where $R^{(h)}_{jk}$ is interpreted (for some fixed $h$) as a correlation matrix for the random vector $V_{j}^{(h)}$ which is to be generated.
+We can satisfy the correlation properties by a linear transformation
+\begin{equation}
+V_j^{(h)} = \sum_{i} T_{ji}f_i
+\end{equation}
+where $T_{ji}$ must be of toeplitz type and $f_i$ are uncorrelated standard normal Gaussian circular-symmetric random variables with $\langle f_i f_j \rangle = \delta_{ij}$.
+This yields
+\begin{equation}
+R^{(h)}_{jk} = \sum_{i,l} \langle (T_{ji}f_i)^* T_{kl}f_l \rangle = \sum_{i} T_{ji}^* T_{ki}.
+\end{equation}
+Using that the matrix $T$ is symmetric and seeing that $R^{(h)}_{jk}$ must be positive semidefinite (as it is a covariance matrix) we can calculate $T$ with some square root of matrix algorithm.\\
+However all of this can be done more efficiently by using the time stationary of the process.
+Note that $T$ is of toeplitz type simply means that we actually need a convolution of $f$ with $T$ where $T$ must be symmetric with a length of at least $2M + 1$ so that the points up to $M + 1$ can be correlated.
+However, the generated time series would not have the true correlation properties of the ACF if it is truncated after $M+1$.
+The ACF can be either truncated after $n-1$, where $n$ is the total length of the time series, or when the ACF approaches approximately zero.
+Now, denote the length of the ACF by $K$.
+The convolution is given by
+\begin{equation}
+V_j^{(h)} = \sum_{i=1-K}^{K-1} T_{i}f_{j - i}.
+\end{equation}
+It follows that,
+\begin{equation}
+R^{(h)}_{jk} = \langle (V_{j}^{(h)})^* V_k^{(h)} \rangle = \sum_{l=1-K}^{K-1} \sum_{m=1 - K}^{K-1} T_{l} T_{m} \langle f_{j - l} f_{k - m} \rangle.
+\end{equation}
+Using that $\langle f_{j - l} f_{k - m} \rangle = \delta_{m, k - j + l}$ and substituting $\Delta=j-k$ yields
+\begin{equation}
+R^{(h)}_\Delta = \sum_{i=1-K}^{K-1} T_{i} T_{i - \Delta}
+\end{equation}
+where it is assumed that $T$ is zero padded for all indices which fall out of range.
+Applying a Fourier transform over $\Delta$ on both sides results in
+\begin{equation}
+\mathrm{DCT}[R^{(h)}]_j = \sum_{i=1-K}^{K-1} T_{i}\mathrm{DTFT}[T_{i - \Delta}]_j.
+\end{equation}
+From the definition of the $\mathrm{DTFT}$ follows that
+\begin{equation}
+\mathrm{DCT}[R^{(h)}]_j = \sum_{l=1-K}^{K-1} T_{l}\exp\left(\frac{i2\pi lj}{2K-1} \right) \mathrm{DCT}[T]_j,
+\end{equation}
+using the definition of the Fourier transform again results in
+\begin{equation}
+\mathrm{DCT}[R^{(h)}]_j = (2K - 1)\left( \mathrm{DCT}[T]_j \right)^2.
+\end{equation}
+Now there are two options: Either one solves for $T$ and does the convolution in the time domain, or one solves for the Fourier transform of $T$ and does the convolution in Fourier space.
+Which one is faster depends on the choice of $K$.
+The first approach is preferred when $K$ is fixed which results in an asymptotic runtime of $\mathcal{O}(Kn)$.
+In the case $K=n$ latter approach is preferred as it results in a runtime of $\mathcal{O}(n\log(n))$.
+However, choosing $K=n$ has not a real practical use case, as the ACF can always be cut off at small value, in the sense that $M \gtrsim K$.
+
+\subsection{Discrete Fourier and Cosine Transform}
+We define the Discrete Time Fourier Transform as
+\begin{equation}
+\mathrm{DTFT}[x]_n = \sum^{N-1}_{k=0} x_k \exp\left(-\frac{i2\pi kn}{N}\right)
+\end{equation}
+and its inverse by
+\begin{equation}
+\mathrm{DTFT}^{-1}[x]_n = \frac{1}{N}\sum^{N-1}_{k=0} x_k \exp\left(\frac{i2\pi kn}{N}\right).
+\end{equation}
+Sometimes, it can be handy to allow negative indices for a more ``natural'' representation.
+In the case that $n$ is even
+\begin{equation}
+\mathrm{DTFT}^{-1}[\hat{x}]_n = \frac{1}{N}\sum^{N/2+1}_{k=-N/2+2} \hat{x}_k \exp\left(\frac{i2\pi kn}{N}\right)
+\end{equation}
+and in the uneven case
+\begin{equation}
+\mathrm{DTFT}^{-1}[x]_n = \frac{1}{N}\sum^{(N-1)/2}_{k=-(N-1)/2} x_k \exp\left(\frac{i2\pi kn}{N}\right).
+\end{equation}
+The Discrete Cosine Transform of Type I is defined as
+\begin{equation}
+\mathrm{DCT}[x']_n = x'_0 + x'_{N'-1}(-1)^n + 2\sum_{k=0}^{N'-1} x'_k \cos \left(\frac{\pi k n}{N'-1}  \right).
+\end{equation}
+and its inverse is given by
+\begin{equation}
+\mathrm{DCT}^{-1}[x']_n = \frac{\mathrm{DCT}[x']_n}{2(N'-1)}
+\end{equation}
+The $\mathrm{DCT}$ is equivalent to a $\mathrm{DTFT}$ for a symmetric input but it is faster and uses less memory.
+More precisely, it can be shown that for $N=2(N'-1)$ and $x_i=x'_i$ for $i\in[0, N'-1]$ and $x_i=x'_{N-i}$ for $i\in[N', N-1]$ that
+\begin{equation}
+\mathrm{DTFT}^{-1}[x]_n = \mathrm{DCT}^{-1}[x']_n 
+\end{equation}
+where $n\in[0, N'-1]$.
+\subsection{From the continuous Fourier transform to the DCT}
+\begin{align}
+R(\tau) &= \int_{-\infty}^{\infty} \exp(-2\pi i\omega\tau) S(\omega) \d \omega \\
+&=2\int_{0}^{\infty} \cos(2\pi i\omega\tau) S(\omega) \d \omega
+\end{align}
+\begin{align}
+S(j\Delta_\omega) &= S_j\\
+R(j\Delta_\tau) &= R_j
+\end{align}
+As we only store a fixed number of samples, the period must be finite.
+This means, that a periodic continuation beyond the last sample ($S_{N-1}$) must be specified.
+In our case, even symmetry around $N-1$ is considered.
+As the first and last sample's bins shall be centered around $\omega=0$ and $\omega=(N-1)\Delta_\omega$ respectively, they have half width, so the integral becomes
+\begin{align}
+R_k = S_0\Delta_\omega + \cos({2\pi (N-1) k\Delta_\omega \Delta_\tau}) S_{N-1} + 2\sum_{j=1}^{j=N-2}\cos({2\pi j k \Delta_\omega \Delta_\tau}) S_j \Delta_\omega 
+\end{align}
+The maximum frequency (half bandwidth in our case) is $B = \Delta_\omega (N - 1)$.
+Now we can use the sampling theorem to find $\Delta_\tau = 1/(2B)$.
+\begin{align}
+R_k = \left(S_0 + (-1)^kS_{N-1} + 2\sum_{j=1}^{j=N-2}\cos \left(\frac{\pi j k}{N-1}  \right) S_j \right) \Delta_\omega
+\end{align}
+This is a type I DCT (Discrete Cosine Transform) according to scipy definition. 
+
+
+\section{Calculation of codes}
+
 Due to technical limitations of the radar we have $\epsilon_i \in [-1, 1]$ and a naive brute force algorithm finds the following (shortest) codes for a given $N$ and $M$
 \begin{center}
 	\centering
@@ -82,4 +392,22 @@ Due to technical limitations of the radar we have $\epsilon_i \in [-1, 1]$ and a
 	\end{tabular}
 \end{center}
 Note that we have used that every code which is valid for $w$ is also valid for $-w$, because the value of the sum does not change if the code is shifted by $w$, due to the codes periodicity.
+
+
+\section{Possibility of using a Quantum SAT-Solver}
+
+The condition could be transformed to a boolean SAT problem, which could be solved by Grover's algorithm on a quantum computer.
+See \url{https://learn.qiskit.org/course/introduction/grovers-search-algorithm}.
+However, there are also different SAT-Solvers, which might pose a speedup compared to random guessing.
+There are also combinations of improved SAT-Solvers and quantum; investigate this.
+
+
 \end{document}
+
+
+
+
+
+
+
+
