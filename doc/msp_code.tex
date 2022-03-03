@@ -42,27 +42,27 @@ where $N$ is the maximum altitude index considered and $k$ is the altitude index
 Note that $N$ must be finite.\\
 Now, the estimator
 \begin{equation}
-\hat{R}^{(h)}_\Delta = \frac{1}{L}\sum^L_{j=1}\epsilon_{j + \Delta}m_{j + \Delta + h}^* \epsilon_j^*m_{j + h}.
+\hat{R}^{(h)}_\Delta = \frac{1}{L}\sum^{L-1}_{j=0}\epsilon_{j + \Delta}m_{j + \Delta + h}^* \epsilon_j^*m_{j + h}.
 \end{equation}
 for the autocorrelation function $R$ at altitude $h$ and lag $\Delta$ is considered.
 In the following, it will be shown that this estimator is unbiased, if the code fulfills a certain condition.\\
 We calculate the expectation value of the estimator
 \begin{equation}
 \langle \hat{R}^{(h)}_\Delta \rangle
-=\frac{1}{L}\sum^L_{j=1} \epsilon_{j + \Delta}\epsilon_j^* \sum_{k=0}^{N-1} \epsilon_{j+\Delta+h-k}^*\epsilon_{j+h-k} \langle (V^{(k)}_{j + \Delta})^*V^{(k)}_j \rangle
+=\frac{1}{L}\sum^{L - 1}_{j=0} \epsilon_{j + \Delta}\epsilon_j^* \sum_{k=0}^{N-1} \epsilon_{j+\Delta+h-k}^*\epsilon_{j+h-k} \langle (V^{(k)}_{j + \Delta})^*V^{(k)}_j \rangle
 \end{equation}
 where the double sum was reduced to a single sum symbol, because scattered voltages of different altitudes do not correlate.
 Now, we use the definition of the autocorrelation function $\langle (V_{j+\Delta}^{(k)})^* V_j^{(k)} \rangle = R^{(k)}_\Delta$, where we assume a wide sense stationary process during the time it takes to transmit the code once.
 \begin{equation}
 \langle \hat{R}^{(h)}_\Delta \rangle
 = R^{(h)}_\Delta + \sum_{k=0,k\neq h}^{N-1}R^{(k)}_\Delta
-\left[ \frac{1}{L}\sum^L_{j=1}\epsilon_{j + \Delta}\epsilon_j^* \epsilon_{j+\Delta+h-k}^*\epsilon_{j+h-k}\right].
+\left[ \frac{1}{L}\sum^{L-1}_{j=0}\epsilon_{j + \Delta}\epsilon_j^* \epsilon_{j+\Delta+h-k}^*\epsilon_{j+h-k}\right].
 \end{equation}
 The estimator is unbiased if the expression in the square brackets is zero.
 Let $w = k - h$ and note that $w \neq 0$ and $|w| < N$.
 Using the periodicity it can be shown that the condition is equivalent to
 \begin{equation}
-0 = \frac{1}{L}\sum^L_{j=1}\epsilon_{j}\epsilon_{j+w}^* \epsilon_{j+\Delta}^*\epsilon_{j + \Delta + w}.
+0 = \frac{1}{L}\sum^{L-1}_{j=0}\epsilon_{j}\epsilon_{j+w}^* \epsilon_{j+\Delta}^*\epsilon_{j + \Delta + w}.
 \label{eq:cond}
 \end{equation}
 In the next section, solutions of this equation are discussed.
@@ -124,7 +124,7 @@ Let
 \end{equation}
 so that the autocorrelation function of the code can be written as
 \begin{equation}
-s_i = \sum_{j=1}^{L}\gamma_{j, i}.
+s_i = \sum_{j=0}^{L-1}\gamma_{j, i}.
 \end{equation}
 We want to satisfy conditions of the type $s_i=0$ for certain values of $i$, which requires solving the inverse problem, which is, calculating $\epsilon$ given a certain $\gamma$.
 The recursive equation
@@ -142,7 +142,7 @@ We have now formally solved the problem for a single, fixed value of $i$.
 In order to satisfy a problem in which two values of $i$ are allowed, called $i_1$ and $i_2$, we calculate the sets of corresponding solutions $\gamma_{j, i}$ and $\gamma'_{j, i'}$ first.
 
 \begin{equation}
-s'_i s_i = \sum_{j'=1}^{L}\sum_{j=1}^{L}\gamma'_{j', i}\gamma_{j, i}.
+s'_i s_i = \sum_{j'=0}^{L-1}\sum_{j=0}^{L-1}\gamma'_{j', i}\gamma_{j, i}.
 \end{equation}
 
 \subsection{Connections between $\gamma$}
