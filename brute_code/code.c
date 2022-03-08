@@ -63,10 +63,14 @@ __attribute__((optimize("unroll-loops"), always_inline)) inline void check(unsig
         }
     }
     // if we get here, the code is valid
-    cout << "solution (L=" << L << "): ";
-    print(L, c);
-    pyprint(L, c);
-    exit(0);
+    #pragma omp critical 
+    {
+        cout << "solution_text," << L << "," << N << "," << M << ",";
+        print(L, c);
+        cout << "solution_py," << L << "," << N << "," << M << ",";
+        pyprint(L, c);
+        exit(0);
+    }
 }
 
 int main(){
