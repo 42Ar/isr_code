@@ -3,7 +3,7 @@
 
 using namespace std;
 
-static const unsigned int N = 6, M = 3, maxL = 44; // we assume M < N
+static const unsigned int N = N_VAL, M = M_VAL, maxL = 60; // we assume M < N
 static const unsigned int minL = (max(N, M + 1) + 1)/2*2;
 
 typedef uint64_t code_t;
