@@ -27,8 +27,10 @@
 \end{figure}
 
 \section{Introduction}
-A binary phase radar code is presented which has optimal noise canceling properties, intrinsically measures the entire range at once (assuming that it is finite) and supports arbitrary radar duty cycles.
-\section{Mathematical description}
+A novel binary phase radar code is presented which has optimal noise canceling properties for the lag value estimator being considered.
+Furthermore, it is shown that the estimator is close to the Cramér–Rao bound.
+The code intrinsically measures the entire range at once, which must be finite.
+\section{Estimator and code requirement for zero bias}
 We assume that the radar code $\epsilon$ has length $L$ and is periodic $\epsilon_i = \epsilon_{i + L}$.
 Furthermore, the radar code is normalized and binary phase, meaning that $\epsilon_i \in [-1, 1]$.
 This implies that $\epsilon_i^*\epsilon_i = 1$, where we could drop the complex conjugate symbol, but we will keep it to show that the formalism also applies to poly-phase codes.
@@ -36,7 +38,7 @@ We further assume that the radar code is transmitted indefinitely.\\
 Figure \ref{fig:sketch} illustrates the measurement process of the unmodulated code.
 In the figure, it can be seen that the measured voltage $m_i$ at time index $i$ can be calculated by summing over the scattered voltages $V^{(k)}_i$ which are modulated with the radar code,
 \begin{equation}
-\sum_{k=0}^{N-1} \epsilon_{i-k} V^{(k)}_i = m_i
+m_i = \sum_{k=0}^{N-1} \epsilon_{i-k} V^{(k)}_i
 \end{equation}
 where $N$ is the maximum altitude index considered and $k$ is the altitude index.
 Note that $N$ must be finite.\\
@@ -44,7 +46,7 @@ Now, the estimator
 \begin{equation}
 \hat{R}^{(h)}_\Delta = \frac{1}{L}\sum^{L-1}_{j=0}\epsilon_{j + \Delta}m_{j + \Delta + h}^* \epsilon_j^*m_{j + h}.
 \end{equation}
-for the autocorrelation function $R$ at altitude $h$ and lag $\Delta$ is considered.
+for the autocorrelation function $R$ at altitude $h$ and lag $\Delta > 0$ is introduced.
 In the following, it will be shown that this estimator is unbiased, if the code fulfills a certain condition.\\
 We calculate the expectation value of the estimator
 \begin{equation}
@@ -65,11 +67,71 @@ Using the periodicity it can be shown that the condition is equivalent to
 0 = \frac{1}{L}\sum^{L-1}_{j=0}\epsilon_{j}\epsilon_{j+w}^* \epsilon_{j+\Delta}^*\epsilon_{j + \Delta + w}.
 \label{eq:cond}
 \end{equation}
-In the next section, solutions of this equation are discussed.
+\subsection{Bias of a random code}
+For a random code, the condition is not exactly zero
+\begin{equation}
+r = \frac{1}{L}\sum^{L-1}_{j=0}\epsilon_{j}\epsilon_{j+w}^* \epsilon_{j+\Delta}^*\epsilon_{j + \Delta + w}.
+\end{equation}
+The variance is
+\begin{equation}
+\mathrm{Var}[r] = \frac{1}{L},
+\end{equation}
+which means that the result will be biased on average by
+\begin{equation}
+b^{(h)}_\Delta = \sum_{k=0,k\neq h}^{N-1}\frac{R^{(k)}_\Delta}{\sqrt{L}}
+\end{equation}
+
+\section{Optimizing the noise cancellation properties}
+The variance is calculated by
+\begin{equation}
+\langle |\hat{R}^{(h)}_\Delta|^2 \rangle = \frac{1}{L^2}\sum^{L-1}_{j_1=0}\sum^{L-1}_{j_2=0}
+\epsilon_{j_1} \epsilon_{j_1 + \Delta}
+\epsilon_{j_2} \epsilon_{j_2 + \Delta}
+\langle
+m_{j_1 + \Delta + h} m_{j_1 + h}^*
+m_{j_2 + \Delta + h}^* m_{j_2 + h}
+\rangle
+\end{equation}
+using Isserli's theorem on the four product of Gaussian random numbers
+\begin{equation}
+\mathrm{Var}[ \hat{R}^{(h)}_\Delta ] = \frac{1}{L^2}\sum^{L-1}_{j_1=0}\sum^{L-1}_{j_2=0}
+\epsilon_{j_1} \epsilon_{j_1 + \Delta}
+\epsilon_{j_2} \epsilon_{j_2 + \Delta}
+\langle m_{j_1 + \Delta + h} m_{j_2 + \Delta + h}^* \rangle
+\langle m_{j_2 + h} m_{j_1 + h}^* \rangle
+\end{equation}
+and using $\langle m_i m_j \rangle = 0$ yields the desired variance.
+Calculating the remaining expectation values
+\begin{equation}
+\langle m_{j_1}^*m_{j_2} \rangle = \sum_{k=0}^{N-1} \epsilon_{j_1-k} \epsilon_{j_2-k} R_{|j_1-j_2|}^{(k)}
+\end{equation}
+and substituting it into the previous expression result in
+\begin{equation}
+\mathrm{Var}[ \hat{R}^{(h)}_\Delta ] = \frac{1}{L^2}\sum^{L-1}_{j_1=0}\sum^{L-1}_{j_2=0}\sum_{k_1=0}^{N-1}\sum_{k_2=0}^{N-1}
+\hat{\epsilon}_{j_1}\hat{\epsilon}_{j_2} R_{|j_1-j_2|}^{(k_1)} R_{|j_1-j_2|}^{(k_2)}
+\end{equation}
+where
+\begin{equation}
+\hat{\epsilon}_j = \epsilon_j \epsilon_{j + \Delta} \epsilon_{j + h - k_2} \epsilon_{j + \Delta + h - k_1}
+\end{equation}
+was defined for brevity.
+By making use of the symmetry in $j_1 \leftrightarrow j_2$ it can be shown that
+\begin{equation}
+\mathrm{Var}[ \hat{R}^{(h)}_\Delta ] = \frac{1}{L}\left(\sum_{k_1=0}^{N-1} R_{0}^{(k_1)} \right)^2 +
+\frac{2}{L^2}\sum^{L-1}_{j_2=1}\sum^{L-1-j_2}_{j_1=0}\sum_{k_1=0}^{N-1}\sum_{k_2=0}^{N-1}
+\hat{\epsilon}_{j_1}\hat{\epsilon}_{j_1+j_2} R_{|j_2|}^{(k_1)} R_{|j_2|}^{(k_2)}.
+\end{equation}
+Now, the unknown product of $R$ variables does no longer depend $j_1$, but the codes are summed over $j_1$.
+For a random code of infinite length, the sum over $j_1$ will have zero expectation value.
+However, for a finite code the sum over $j_1$ can be negative, yielding additional noise suppression.
+The design of a code with maximal noise suppression appears to depend on the measurement results themselves.
+All codes which fulfill the bias free condition yield basically the same amount of noise suppression and appear like a random code to the second term.
+This gives effectively a standard deviation proportional to $N/L^{3/2}$ because $R$ drops exponentially with increasing $j_2$.
+So a long code might be better than a short periodic one.
 
 \section{Solving the code condition}
 The condition given by \eqref{eq:cond} is trivially fulfilled for pseudo random numbers if $L \rightarrow \infty$.
-However, the measurement would have no (definitive) time resolution in this case.
+However, the measurement would be biased and have no (definitive) time resolution in this case.
 With a brute-force computer search it can be shown that solutions do exist, when a finite $\Delta \in [1, M]$ is assumed, where $M$ is the total number of measurement points in the auto correlation function.
 If a code fulfills the condition it will be referred to as a valid code.
 Note that an inversion or a (cyclic) shift of any valid code is also a valid code.
@@ -231,6 +293,11 @@ the code +---- is already a basis for all codes of the same length
 take a look at period discrete convolution
 
 
+longest run in the beginning
+followed by an uneven number of runs
+511111
+5311
+
 \begin{equation}
 a_{i_1}b_{i_2}a_{i_1+j}b_{i_2+j}
 \end{equation}
@@ -258,13 +325,82 @@ W = \sum_{i=1}^{L} \epsilon_i \leq (s_j + L)/2
 \end{equation}
 
 \section{Modulating the code}
+\subsection{Modulation with fixed code}
 
+\begin{figure}
+	\centering
+	\includegraphics[width=1\linewidth]{code_diagram_modulated.pdf}
+	\caption{Range time diagram of the modulated version of the radar code with $S=3$.}
+	\label{fig:modulated}
+\end{figure}
+\begin{equation}
+m_{i,w} = \sum_{k=0}^{N-1} \epsilon_{i-k} \sum_{s=0}^{S-1} \gamma_{S-1-s} V^{(k, s + w)}_{i}
+\end{equation}
+\begin{equation}
+d_{i,w} = \sum^{S-1}_{s=0} \gamma_{s} m_{i, s + w}
+\end{equation}
+\begin{equation}
+d_{i,w} = \sum_{k=0}^{N-1}\epsilon_{i-k} \sum_{s_1=0}^{S-1} \sum^{S-1}_{s_2=0} \gamma_{s_2} \gamma_{S-1-s_1} V_i^{(k, s_1 + s_2 + w)}
+\end{equation}
+\begin{equation}
+d_{i,w} = \sum_{k=0}^{N-1}\epsilon_{i-k} \sum_{s_1=0}^{S-1} \sum^{S-1}_{s_2=0} \gamma_{s_1} \gamma_{s_2} V_i^{(k, S - 1 - s_1 + s_2 + w)}
+\end{equation}
+\begin{equation}
+d_{i,w} = \sum_{k=0}^{N-1}\epsilon_{i-k}\left[SV_i^{(k, S - 1 + w)}
++ \sum_{s_1=1}^{S-1} \sum^{S-1-s_1}_{s_2=0} \gamma_{s_2} \gamma_{s_1 + s_2} V_i^{(k, S - 1 + s_1 + w)}
++ \sum_{s_1=1}^{S-1} \sum^{S-1-s_1}_{s_2=0} \gamma_{s_2+s_1} \gamma_{s_2} V_i^{(k, S - 1 - s_1 + w)} \right]
+\end{equation}
+\begin{equation}
+A_{s_1} = \sum^{S-1-s_1}_{s_2=0} \gamma_{s_2+s_1} \gamma_{s_2}\text{ for }s_1\in[0, S-1]
+\end{equation}
+\begin{equation}
+d_{i,w} = \sum_{k=0}^{N-1}\epsilon_{i-k}\sum_{s=1-S}^{S-1} A_{|s|} V_i^{(k, S - 1 + s + w)}
+\end{equation}
+\begin{equation}
+\hat{R}^{(h, w)}_\Delta = \frac{1}{L}\sum^{L-1}_{j=0}
+\epsilon_{j + \Delta}d_{j + \Delta + h, w}^*
+\epsilon_jd_{j + h, w}.
+\end{equation}
+\begin{equation}
+\hat{R}^{(h, w)}_\Delta = \frac{1}{L}\sum^{L-1}_{j=0}
+\epsilon_{j + \Delta}
+\sum_{k_1=0}^{N-1}\epsilon_{j+\Delta+h-k_1}\sum_{s_1=1-S}^{S-1} A_{|s_1|} \left(V_{j+\Delta+h}^{(k_1, S - 1 + s_1 + w)}\right)^*
+\epsilon_j
+\sum_{k_2=0}^{N-1}\epsilon_{j+h-k_2}\sum_{s_2=1-S}^{S-1} A_{|s_2|} V_{j+h}^{(k_2, S - 1 + s_2 + w)}
+\end{equation}
+\begin{equation}
+\langle \hat{R}^{(h, w)}_\Delta \rangle = \frac{1}{L}\sum^{L-1}_{j=0}
+\epsilon_{j + \Delta}
+\sum_{k=0}^{N-1}\epsilon_{j+\Delta+h-k}\sum_{s_1=1-S}^{S-1} A_{|s_1|} 
+\epsilon_j
+\epsilon_{j+h-k}\sum_{s_2=1-S}^{S-1} A_{|s_2|} \left\langle \left(V_{j+\Delta+h}^{(k, S - 1 + s_1 + w)}\right)^* V_{j+h}^{(k, S - 1 + s_2 + w)} \right\rangle
+\end{equation}
+\begin{equation}
+\left\langle \left(V_{j+\Delta+h}^{(k, S - 1 + s_1 + w)}\right)^* V_{j+h}^{(k, S - 1 + s_2 + w)} \right\rangle =
+\delta_{s_1, s_2} R_\Delta^{(k, S-1+s_1+w)} +
+\delta_{s_1, s_2+1} R_\Delta^{(k, S-1+s_1+w + 0.5)}/2 +
+\delta_{s_1, s_2-1} R_\Delta^{(k, S-1+s_1+w - 0.5)}/2
+\end{equation}
+\begin{equation}
+\langle \hat{R}^{(h, w)}_\Delta \rangle =
+\sum_{s_1=1-S}^{S-1} A^2_{|s_1|}R_\Delta^{(h, S-1+s_1+w)}+
+\frac{1}{2}\sum_{s_1=1-S}^{S-2} A_{|s_1|}A_{|s_1+1|}R_\Delta^{(h, S-1+s_1+w+0.5)}+
+\frac{1}{2}\sum_{s_1=2-S}^{S-1} A_{|s_1|}A_{|s_1-1|}R_\Delta^{(h, S-1+s_1+w-0.5)}
+\end{equation}
+if $\gamma$ is a barker code we have $A_{|i|}A_{|i+1|}=0$
+\begin{equation}
+\langle \hat{R}^{(h, w)}_\Delta \rangle =
+\sum_{s_1=1-S}^{S-1} A^2_{|s_1|}R_\Delta^{(h, S-1+s_1+w)}
+\end{equation}
+so we find a biased estimator, where the signal is stronger by a factor
+\begin{equation}
+\frac{S^2}{S - 1}
+\end{equation}
+compared to the bias.
+one can also deconvolute, to find an exact result.
+\subsection{Modulation with variable code}
+\subsection{Hypothesis on code length}
 \section{Code with cyclic difference set for $\tau_i$}
-
-\section{Properties of the code}
-
-
-
 \section{Simulation}
 \subsection{Monte Carlo Generation}
 The most straight-forward approach to generate random numbers following a wide-sense stationary process is as follows:
@@ -334,7 +470,7 @@ In the case that $n$ is even
 \end{equation}
 and in the uneven case
 \begin{equation}
-\mathrm{DTFT}^{-1}[x]_n = \frac{1}{N}\sum^{(N-1)/2}_{k=-(N-1)/2} x_k \exp\left(\frac{i2\pi kn}{N}\right).
+\mathrm{DTFT}^{-1}[\hat{x}]_n = \frac{1}{N}\sum^{(N-1)/2}_{k=-(N-1)/2} \hat{x}_k \exp\left(\frac{i2\pi kn}{N}\right).
 \end{equation}
 The Discrete Cosine Transform of Type I is defined as
 \begin{equation}
@@ -372,6 +508,98 @@ Now we can use the sampling theorem to find $\Delta_\tau = 1/(2B)$.
 R_k = \left(S_0 + (-1)^kS_{N-1} + 2\sum_{j=1}^{j=N-2}\cos \left(\frac{\pi j k}{N-1}  \right) S_j \right) \Delta_\omega
 \end{align}
 This is a type I DCT (Discrete Cosine Transform) according to scipy definition. 
+
+\section{A lower bound for the variance}
+
+Assumptions made: monostatic radar, binary coded transmission, gaussian process
+A lower bound for the variance of any ACF estimation independent of the estimator is to be calculate, by means of the Cramér–Rao bound.
+What the radar measures (independent of the estimator) is
+\begin{equation}
+m_i=\sum_{k=0}^{N-1} \epsilon_{i-k} V^{(k)}_i.
+\end{equation}
+The parameters to be estimated are 
+\begin{equation}
+R^{(k)}_\Delta=\langle (V_{j+\Delta}^{(k)})^* V_j^{(k)} \rangle.
+\end{equation}
+The individual $m_i$ are random Gaussian distributed.
+The information is contained in the correlations.
+Define the probability density function $P = P(m_{1..n}, R^{(0..N-1)}_{1..M})$.
+We need to calculate $P$.
+the random variables $V^{(k)}_i$ are normally distributed with a correlation matrix of toeplitz type given by
+\begin{equation}
+\Sigma^{(k)}_{ij} = R_{i-j}^{(k)}
+\end{equation}
+then $m_i$ are Gaussian distributed according to
+\begin{equation}
+\Sigma_{ij} = \sum_{k=0}^{N-1} \epsilon_{i-k} \epsilon_{j-k} R_{|i-j|}^{(k)}.
+\end{equation}
+we note that the matrix is periodic with $\Sigma_{i,j} = \Sigma_{i+L,j+L}$
+where we imagine the matrix to be infinite in size as the auto correlation never drops to precisely to zero.
+The fisher information matrix for any zero mean Gaussian is
+\begin{equation}
+\mathcal{I}_{ij} = \frac{1}{2}\mathrm{tr}\left(\Sigma^{-1} \frac{\partial \Sigma}{\partial \theta_i} \Sigma^{-1} \frac{\partial \Sigma}{\partial \theta_j} \right)
+\end{equation}
+where each $\theta_i$ identifies exactly one parameter $\theta_i = R^{(k_i)}_{\Delta_i}$
+\begin{equation}
+\frac{\partial \Sigma_{ij}}{\partial \theta_p} = \epsilon_{i - k_p}\epsilon_{j - k_p}\delta_{|i-j|,\Delta_p}
+\end{equation}
+the fisher information matrix is
+\begin{equation}
+\mathcal{I}_{ij} = \frac{1}{2}\sum_{k_1, k_2, k_3, k_4}
+\Sigma^{-1}_{k_1, k_2}
+\epsilon_{k_2 - k_i}\epsilon_{k_3 - k_i}\delta_{|k_2-k_3|,\Delta_i}
+\Sigma^{-1}_{k_3, k_4}
+\epsilon_{k_4 - k_j}\epsilon_{k_1 - k_j}\delta_{|k_4-k_1|,\Delta_j}
+\end{equation}
+defining
+\begin{equation}
+\sigma_{\Delta_1, \Delta_2} =
+\epsilon_{k_2 - k_i}\epsilon_{k_2 + \Delta_1 - k_i}
+\epsilon_{k_1 - k_j}\epsilon_{k_1 + \Delta_2 - k_j}
+\Sigma^{-1}_{k_1, k_2}
+\Sigma^{-1}_{k_2 + \Delta_1, k_1 + \Delta_2}
+\end{equation}
+swapping $k_1 \leftrightarrow k_2$ and using symmetry of $\Sigma^{-1}$ it can be shown that
+\begin{equation}
+\sigma_{\Delta_1, \Delta_2} =
+\epsilon_{k_1 - k_i}\epsilon_{k_1 + \Delta_1 - k_i}
+\epsilon_{k_2 - k_j}\epsilon_{k_2 + \Delta_2 - k_j}
+\Sigma^{-1}_{k_1, k_2}
+\Sigma^{-1}_{k_1 + \Delta_1, k_2 + \Delta_2}
+\end{equation}
+using this definition results in
+\begin{equation}
+\mathcal{I}_{ij} = \frac{1}{2}\sum_{k_1, k_2}
+\left[\sigma_{\Delta_i, \Delta_j}+\sigma_{-\Delta_i, \Delta_j}+
+\sigma_{\Delta_i, -\Delta_j}+\sigma_{-\Delta_i, -\Delta_j}\right]
+\end{equation}
+for an infinite length random code with high $N$ the diagonal elements of $\Sigma$ grow proportional to $N$, while the off-diagonal elements have zero expectation value.
+They do have a standard deviation of $\sqrt{N}$ but for sufficient large $N$ a diagonal matrix is found:
+\begin{equation}
+\Sigma_{ij} = \delta_{ij} \sum_{k=0}^{N-1} R_{0}^{(k)}
+\end{equation}
+which has the trivial inverse
+\begin{equation}
+\Sigma^{-1}_{ij} = \delta_{ij} \left(\sum_{k=0}^{N-1} R_{0}^{(k)}\right)^{-1}
+\end{equation}
+when substituting this into $\sigma$ it can be seen that $\Delta_i=\Delta_j$ and $k_1=k_2$ must hold for $\sigma \neq 0$.
+\begin{equation}
+\sigma_{\Delta_1, \Delta_2} = \delta_{k_1 k_2}\delta_{\Delta_1\Delta_2}
+\epsilon_{k_1 - k_i}\epsilon_{k_1 + \Delta_1 - k_i}
+\epsilon_{k_2 - k_j}\epsilon_{k_2 + \Delta_2 - k_j}
+\left(\sum_{k=0}^{N-1} R_{0}^{(k)}\right)^{-2}
+\end{equation}
+the epsilons will square away for $k_i=k_j$ or special cases like $\Delta_1 = \Delta_2 = k_j, k_i=0$ but we are only interested in the main diagonal of the fisher matrix, so $k_i=k_j$.
+the fisher matrix is thus approximately given by
+\begin{equation}
+\mathcal{I}_{ij} = \delta_{ij} L \left(\sum_{k=0}^{N-1} R_{0}^{(k)}\right)^{-2}
+\end{equation}
+where we assumed $L$ measurements 
+
+so the lower bound for the standard deviation is
+\begin{equation}
+\sigma \geq \frac{1}{\sqrt{L}}\sum_{k=0}^{N-1} R_{0}^{(k)}
+\end{equation}
 
 
 \section{Calculation of codes}
