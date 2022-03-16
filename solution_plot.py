@@ -47,7 +47,7 @@ for line in f:
         else:
             cur = c
             res.append(1)
-    print(N, M, sum(code), max(res), len(res))
+    print(f"N: {N:2d}, M: {M:2d} L: {L:2d}, runs: {len(res):2d}")
     sols.append((N, M, code))
 max_N = max(t[0] for t in sols)
 max_M = max(t[1] for t in sols)
