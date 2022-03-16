@@ -97,7 +97,7 @@ int main(){
     for(unsigned int L = minL; L <= maxL; L += 2){
         cout << "L: " << L << endl;
         // note that this parallelized loop acually checks only a quarter of the codes
-        #pragma omp parallel for
+        //#pragma omp parallel for schedule(static, 4096)
         for(code_t c = code_t(1) << (L - 1); code_t(c) < (code_t(1) << L); c += 2){
             check(L, c);
         }
@@ -106,38 +106,56 @@ int main(){
     typedef unsigned int uint;
     typedef unsigned int run_len_t;
 
+    // this algorithm checks all cyclic-unique combinations which start with 1 except 101010101...
+    // note that by convention the constant sequence is not anti-cyclic
     cout << "running anti-cyclic impl" << endl;
+#ifdef COUNT
+    uint64_t counter = 0;
+#endif
+    code_t end, b, code, alternating = 0;
+    for(uint i = 0; i < sizeof(code_t)*8; i += 2){
+        alternating += (code_t(1) << i);
+    }
     for(uint L = minL; L <= maxL; L += 2){
         cout << "L: " << L << endl;
-        code_t alternating = 0;
-        for(uint i = 0; i < sizeof(code_t)*8; i += 2){
-            alternating += (code_t(1) << i);
-        }
-        #pragma omp parallel for num_threads(16)
-        for(uint leading = L - 1; leading >= 2; leading--){ // leading = 1 not supported
-            run_len_t sol[L - 2];
-            uint c = L - leading;
-            code_t b = (code_t(1) << (leading - 1)) - 1; // start with leading sequence one bit shorter
-            for(uint i = 0; i < L - leading; i++){
+        for(uint leading = L/2 - 1; leading >= 2; leading--){
+            uint L_algo = L - leading;
+            run_len_t sol[L_algo - 2];
+            uint c = L_algo - leading;
+            b = (code_t(1) << (leading - 1)) - 1; // start with leading sequence one bit shorter
+            for(uint i = 0; i < L_algo - leading; i++){
                 sol[i] = 1;
             }
             uint runs = 0;
             b = b << (c + 1);
             c += 1;
-            #pragma omp critical 
-            {
-                cout << "leading " << leading << endl;
-            }
+            cout << "leading " << leading << endl;
             while(1){
                 b = ((b >> c) << c) | (alternating >> (sizeof(code_t)*8 - 1 - c + (runs&1)));
                 runs += c - 2; // all added runs should have length 1
+                c = sol[runs];
                 if((runs&1) == 0){
-                    check(L, b);
+                    code = code_t(1) << (c - 1);
+                    if(code == 1){
+                        code = 2;
+                    }
+                    end = (code_t(1) << leading) - 2;
+                }else{
+                    code = 0;
+                    end = (code_t(1) << leading) - 1 - (code_t(1) << (c - 1));
+                }
+#ifdef COUNT
+                counter += ((end - code) >> 1) + 1;
+#endif
+                code |= (b << leading);
+                end |= (b << leading);
+//                #pragma omp parallel for schedule(static)
+                for(code_t c = code; c <= end; c += 2){
+                    check(L, c);
                 }
                 if(__builtin_expect(runs == 0, 0)){
                     break;
                 }
-                c = sol[runs];
                 sol[runs] = 1;
                 code_t prev = sol[runs - 1];
                 while(__builtin_expect(prev == leading, 0)){
@@ -153,6 +171,19 @@ int main(){
             }
             out:;
         }
+        cout << "remaining" << endl;
+        code = ((code_t(1) << (L/2)) - 1) << L/2;
+        end = (code_t(1) << L) - 2;
+#ifdef COUNT
+        counter += ((end - code) >> 1) + 1;
+#endif
+#pragma omp parallel for
+        for(code_t c = code; c <= end; c += 2){
+            check(L, c);
+        }
+#ifdef COUNT
+        cout << "counter: " << counter << endl;
+#endif
     }
 #endif
 }

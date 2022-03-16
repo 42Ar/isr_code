@@ -21,16 +21,30 @@ def solve_recursive(L):
         doit(leading, L - leading, [leading], sols)
     return sols + [[L]]
 
-x = []
-y = []
-for L in range(2, 25):
+x, y, y_comb = [], [], []
+for L in range(3, 25):
     sols = solve_recursive(L)
+    if L < 10:
+        print(sols)
     x.append(L)
-    y.append(len(sols)/L**2/4)
+    y.append(2**(L - 2)/(len(sols)/2 - 1))
+    y_comb.append(len(sols)/2 - 1)
     print(L, len(sols))
-plt.plot(x, y)
+x.append(34)
+y.append(2**(34 - 2)/358728827)
+x.append(36)
+y.append(2**(36 - 2)/1356530952)
+
+#%%
+
+# no parallel 157 (static schedule 50, def schedule 44, 1024 schedule 36, 4096: 48)
+
+plt.scatter([36, 34, 32], [50.76/10, 7.81/1.95, 0.804/0.77], label="notebook, 64 bit, single core, exhaustive, inner exact loop")
+plt.plot(x, y, label="max speedup", c="black")
 plt.grid()
-plt.yscale("log")
+plt.legend()
+plt.title("speedup")
+plt.grid()
 plt.show()
 
 #%%
@@ -54,9 +68,9 @@ assert len(sols_check) == len(set(sols_check))
 sols = []
 L = 10
 alternating = sum(1 << i for i in range(0, 64, 2))
-sol = [1]*(L - 2)
-for leading in range(2, L//2):
+for leading in list(range(2, L//2))[::-1]:
     L_algo = L - leading # the remaining leading bits are brute-forced
+    sol = [None]*(L_algo - 2)
     c = L_algo - leading
     b = (1 << (leading - 1)) - 1
     for i in range(L_algo - leading):
@@ -68,8 +82,6 @@ for leading in range(2, L//2):
         b = ((b >> c) << c) | (alternating >> (63 - c + (runs&1)))
         runs += c - 2
         c = sol[runs]
-        start = 1 << (c - 1)
-        end = (1 << leading) - 2
         if (runs&1) == 0:
             start = 1 << (c - 1)
             if start == 1:
@@ -78,7 +90,7 @@ for leading in range(2, L//2):
         else:
             start = 0
             end = (1 << leading) - 1 - (1 << (c - 1))
-        print(f"{start:b} {end:b}")
+        print(f"{b:b} {start:b} {end:b}")
         start |= (b << leading)
         end |= (b << leading)
         for lastbits in range(start, end + 1, 2):
