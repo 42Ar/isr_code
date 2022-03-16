@@ -39,7 +39,15 @@ for line in f:
     assert len(code) == L
     if N==8 and M==6:
         print(code)
-    print(N, M, sum(code))
+    cur = code[0]
+    res = [0]
+    for c in code[1:]:
+        if c == cur:
+            res[-1] += 1
+        else:
+            cur = c
+            res.append(1)
+    print(N, M, sum(code), max(res), len(res))
     sols.append((N, M, code))
 max_N = max(t[0] for t in sols)
 max_M = max(t[1] for t in sols)
@@ -74,63 +82,3 @@ plt.xlabel("N")
 plt.ylabel("M")
 #plt.savefig("code_length_overview.pdf")
 plt.show()
-
-
-#%%
-
-
-def doit(leading, remaining, sol, sols):
-    if remaining == 0:
-        #if len(sol) % 2 == 1:
-        sols.append(sol)
-    else:
-        for digit in range(1, min(leading, remaining) + 1):
-            doit(leading, remaining - digit, sol + [digit], sols)
-
-x = []
-y = []
-for L in range(2, 20):
-    sols = []
-    for leading in range(1, L):
-        doit(leading, L - leading, [leading], sols)
-    x.append(L)
-    if L == 10:
-        f = sols
-        print(sols)
-    print(L, len(sols))
-    y.append(len(sols)/L**2)
-plt.plot(x, y)
-
-#%%
-
-sols = []
-L = 10
-alternating = sum(1 << i for i in range(0, 64, 2))
-for leading in range(2, L):
-    c = L - leading
-    sol = [1]*(L - leading)
-    b = (1 << (leading - 1)) - 1
-    runs = 0
-    i = 0
-    while True:
-        if b % 2 == 0:
-            b = (b << (c + 1)) | (alternating >> (63 - c))
-        else:
-            b = (b << (c + 1)) | (alternating >> (62 - c))
-        runs += c
-        c = 0
-        print(f"{leading} {b:b} {[leading] + sol}")
-        sols.append([leading] + sol[:runs])
-        while runs > 0 and (sol[runs - 1] == leading or c == 0):
-            c += sol[runs - 1]
-            b = b >> sol[runs - 1]
-            sol[runs - 1] = 1
-            runs -= 1
-        if runs == 0:
-            break
-        sol[runs - 1] += 1
-        c -= 1
-        i += 1
-
-
-
