@@ -1,7 +1,7 @@
 
 brute: code.c
-	g++ code.c -Wall -march=native -fopenmp -O3 -o brute -DN_VAL=5 -DM_VAL=4
+	g++ code.c -Wall -march=native -O3 -fopenmp -o brute -DN_VAL=8 -DM_VAL=6 -DMAX_L_VAL=48 -DMIN_L_VAL=48
 
 code.s: code.c
-	g++ code.c -Wall -S -masm=intel -march=native -fopenmp -O3 -DN_VAL=5 -DM_VAL=4
+	g++ code.c -Wall -S -masm=intel -march=native -fopenmp -O3
 
