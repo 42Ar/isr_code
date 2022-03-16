@@ -45,7 +45,9 @@ for sol in sols:
             res += "1"*c
         else:
             res += "0"*c
-    sols_check.append(res)
+    if res[-1] == "0":
+        sols_check.append(res)
+assert len(sols_check) == len(set(sols_check))
 
 #%%
 
@@ -53,7 +55,7 @@ sols = []
 L = 10
 alternating = sum(1 << i for i in range(0, 64, 2))
 sol = [1]*(L - 2)
-for leading in range(1, L//2):
+for leading in range(2, L//2):
     L_algo = L - leading # the remaining leading bits are brute-forced
     c = L_algo - leading
     b = (1 << (leading - 1)) - 1
@@ -67,13 +69,19 @@ for leading in range(1, L//2):
         runs += c - 2
         c = sol[runs]
         start = 1 << (c - 1)
-        end = (1 << leading) - 1
-        if (runs&1) == 1:
-            end -= start
+        end = (1 << leading) - 2
+        if (runs&1) == 0:
+            start = 1 << (c - 1)
+            if start == 1:
+                start += 1
+            end = (1 << leading) - 2
+        else:
             start = 0
+            end = (1 << leading) - 1 - (1 << (c - 1))
+        print(f"{start:b} {end:b}")
         start |= (b << leading)
         end |= (b << leading)
-        for lastbits in range(start, end + 1):
+        for lastbits in range(start, end + 1, 2):
             print(f"{lastbits:02b} {[leading] + sol[:runs+1]}")
             sols.append(tuple([leading] + sol[:runs+1] + [f"{lastbits:b}"]))
         if runs == 0:
@@ -93,10 +101,10 @@ for leading in range(1, L//2):
             break
         sol[runs - 1] = prev + 1
 start = ((1 << L//2) - 1) << L//2
-end = ((1 << L) - 1)
-for brute_bits in range(start, end + 1):
+end = (1 << L) - 2
+for brute_bits in range(start, end + 1, 2):
     sols.append(("brute", f"{brute_bits:02b}"))
-
+sols.append(("last", f"{(alternating >> (63 - L)):b}"))
 assert set(sols_check) == set(t[-1] for t in sols)
 
 
