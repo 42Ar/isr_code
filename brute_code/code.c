@@ -134,15 +134,15 @@ int main(){
                 if((runs&1) == 0){
                     check(L, b);
                 }
-                if(runs == 0){
+                if(__builtin_expect(runs == 0, 0)){
                     break;
                 }
                 c = sol[runs];
                 sol[runs] = 1;
                 code_t prev = sol[runs - 1];
-                while(prev == leading){
+                while(__builtin_expect(prev == leading, 0)){
                     runs--;
-                    if(runs == 0){
+                    if(__builtin_expect(runs == 0, 0)){
                         goto out;
                     }
                     c += prev;
