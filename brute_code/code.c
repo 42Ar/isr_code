@@ -22,7 +22,7 @@ static const unsigned int minL = MIN_L_VAL;
 static const unsigned int minL = (max(N, M + 1) + 1)/2*2;
 #endif
 
-#ifndef BIT_128
+#ifdef BIT_128
 typedef unsigned __int128 code_t;
 #else
 typedef uint64_t code_t;
