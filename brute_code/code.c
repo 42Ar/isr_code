@@ -1,7 +1,10 @@
 #include <iostream>
 #include <chrono>
+#include <omp.h>
 
 using namespace std;
+
+#define NUM_THREADS 6
 
 #ifndef N_VAL
 #error "define N_VAL"
@@ -91,13 +94,14 @@ __attribute__((optimize("unroll-loops"), always_inline)) inline void check(unsig
 }
 
 int main(){
+    omp_set_num_threads(NUM_THREADS);
 #ifdef IMPL_ENUM
     cout << "running enumerate impl" << endl;
     // loop over bitvector length
     for(unsigned int L = minL; L <= maxL; L += 2){
         cout << "L: " << L << endl;
         // note that this parallelized loop acually checks only a quarter of the codes
-        #pragma omp parallel for num_threads(6) schedule(static)
+        #pragma omp parallel for
         for(code_t c = code_t(1) << (L - 1); code_t(c) < (code_t(1) << L); c += 2){
             check(L, c);
         }
@@ -194,79 +198,107 @@ int main(){
 #ifdef COUNT
     uint64_t counter = 0;
 #endif
-    code_t code, end_code, prev_code;
     for(uint L = minL; L <= maxL; L += 2){
         cout << "L: " << L << endl;
-        for(uint leading = L/2 - 1; leading >= 2; leading--){
-            cout << "leading " << leading << endl;
-            uint remaining = L - leading - 1;
-            uint seqs = remaining/leading;
-            uint buffer_seq_len = remaining%leading;
-            sub_code_t mask = (sub_code_t(1) << leading) - 1;
-            code = mask;
-            code = code << (1 + buffer_seq_len); // we start with leading sequence followed by the zero and the buffer seq
-            sub_code_t buffer_end_exclusive = 1 << buffer_seq_len;
-            for(sub_code_t buffer_seq = 0; buffer_seq < buffer_end_exclusive; buffer_seq++){
-                uint start = 0;
-                if(buffer_seq == 0){
-                    start = sub_code_t(1) << buffer_seq_len; 
-                }else if((buffer_seq&1) == 0){
-                    start = sub_code_t(1) << (__builtin_ctz(buffer_seq) - 1);
-                }
-                code = ((((code >> buffer_seq_len) << buffer_seq_len) | buffer_seq) << leading) | start;
-                uint cur_pos = leading*(seqs - 1);
-                uint goup = 0;
-                do{
-                    prev_code = code >> leading;
-                    sub_code_t end = mask;
-                    if((prev_code&1) == 1){
-                        end -= sub_code_t(1) << (__builtin_ctz(~sub_code_t(prev_code)) - 1);
+        #pragma omp parallel
+        {
+            code_t code, end_code, prev_code;
+            int split_counter = 0;
+            for(uint leading = L/2 - 1; leading >= 2; leading--){
+                //cout << "leading " << leading << endl;
+                uint remaining = L - leading - 1;
+                uint seqs = remaining/leading;
+                if(seqs == 1){
+                    // can not split this one, so split here
+                    if(split_counter % NUM_THREADS != omp_get_thread_num()){
+                        split_counter += 1;
+                        continue;
                     }
-                    if(__builtin_expect(cur_pos == 0, 0)){
-                        if((code&1) == 1){
-                            code += 1; // round up if uneven, as all final codes must end with 0
+                    split_counter += 1;
+                }
+                // make work pieces as large as possible but not to large
+                uint split_pos = (seqs - 1)*leading; // zero is not supported, must be a multiple of leading
+                if(leading < 5 && split_pos > leading){
+                    split_pos -= leading;
+                }
+                uint buffer_seq_len = remaining%leading;
+                sub_code_t mask = (sub_code_t(1) << leading) - 1;
+                code = mask;
+                code = code << (1 + buffer_seq_len); // we start with leading sequence followed by the zero and the buffer seq
+                sub_code_t buffer_end_exclusive = 1 << buffer_seq_len;
+                for(sub_code_t buffer_seq = 0; buffer_seq < buffer_end_exclusive; buffer_seq++){
+                    uint start = 0;
+                    if(buffer_seq == 0){
+                        start = sub_code_t(1) << buffer_seq_len; 
+                    }else if((buffer_seq&1) == 0){
+                        start = sub_code_t(1) << (__builtin_ctz(buffer_seq) - 1);
+                    }
+                    code = ((((code >> buffer_seq_len) << buffer_seq_len) | buffer_seq) << leading) | start;
+                    uint cur_pos = leading*(seqs - 1);
+                    uint goup = 0;
+                    do{
+                        prev_code = code >> leading;
+                        sub_code_t end = mask;
+                        if((prev_code&1) == 1){
+                            end -= sub_code_t(1) << (__builtin_ctz(~sub_code_t(prev_code)) - 1);
                         }
-                        end_code = (prev_code << leading) | end; // might end with 1, but we are using <= in the loop and not !=
+                        if(__builtin_expect(cur_pos == 0, 0)){
+                            if((code&1) == 1){
+                                code += 1; // round up if uneven, as all final codes must end with 0
+                            }
+                            end_code = (prev_code << leading) | end; // might end with 1, but we are using <= in the loop and not !=
 #ifdef COUNT
-                        counter += ((end_code - code) >> 1) + 1;
+                            #pragma omp atomic
+                            counter += ((end_code - code) >> 1) + 1;
 #endif
-                        #pragma omp parallel for num_threads(6) schedule(static)
-                        for(code_t c = code; c <= end_code; c += 2){
-                            check(L, c);
-                        }
-                        cur_pos += leading;
-                        code = prev_code;
-                        goup = 1;
-                    }else{
-                        if(__builtin_expect((sub_code_t(code)&mask) == end, 0)){
-                            code = prev_code;
+                            for(code_t c = code; c <= end_code; c += 2){
+                                check(L, c);
+                            }
                             cur_pos += leading;
+                            code = prev_code;
                             goup = 1;
                         }else{
-                            code += goup;
-                            goup = 0;
-                            sub_code_t start = 0;
-                            if((code&1) == 0){
-                                start = start | (sub_code_t(1) << (__builtin_ctz(sub_code_t(code)) - 1));
+increase:
+                            if(__builtin_expect((sub_code_t(code)&mask) == end, 0)){
+                                // goup must be 1 here
+                                code = prev_code;
+                                cur_pos += leading;
+                            }else{
+                                code += goup;
+                                goup = 0;
+                                if(__builtin_expect(cur_pos == split_pos, 0)){
+                                    if(split_counter % NUM_THREADS != omp_get_thread_num()){
+                                        goup = 1;
+                                        split_counter += 1;
+                                        goto increase;
+                                    }
+                                    split_counter += 1;
+                                }
+                                sub_code_t start = 0;
+                                if((code&1) == 0){
+                                    start = start | (sub_code_t(1) << (__builtin_ctz(sub_code_t(code)) - 1));
+                                }
+                                code = (code << leading) | start;
+                                cur_pos -= leading;
                             }
-                            code = (code << leading) | start;
-                            cur_pos -= leading;
                         }
-                    }
-                }while(cur_pos < leading*seqs);
+                    }while(cur_pos < leading*seqs);
+                }
             }
-        }
-        cout << "remaining" << endl;
-        code = ((code_t(1) << (L/2)) - 1) << L/2;
-        end_code = (code_t(1) << L) - 2;
+            code = ((code_t(1) << (L/2)) - 1) << L/2;
+            end_code = (code_t(1) << L) - 2;
 #ifdef COUNT
-        counter += ((end_code - code) >> 1) + 1;
+            if(omp_get_thread_num() == 0){
+                #pragma omp atomic
+                counter += ((end_code - code) >> 1) + 1;
+            }
 #endif
-        #pragma omp parallel for num_threads(6) schedule(static)
-        for(code_t c = code; c <= end_code; c += 2){
-            check(L, c);
-        }
-    }
+            #pragma omp for
+            for(code_t c = code; c <= end_code; c += 2){
+                check(L, c);
+            }
+        } // parallel section
+    } // loop over L
 #ifdef COUNT
     cout << "counter: " << counter << endl;
 #endif
