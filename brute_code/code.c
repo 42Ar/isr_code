@@ -30,10 +30,10 @@ typedef uint64_t code_t;
  */
 void print(unsigned int L, code_t c){
     for(unsigned int i = 0; i < L; i++){
-        if((c >> (L - i - 1)) & 1){
-            cout << "-";
+        if((c >> (L - i - 1))&1){
+            cout << "1";
         }else{
-            cout << "+";
+            cout << "0";
         }
     }
     cout << endl;
@@ -97,12 +97,12 @@ int main(){
     for(unsigned int L = minL; L <= maxL; L += 2){
         cout << "L: " << L << endl;
         // note that this parallelized loop acually checks only a quarter of the codes
-        //#pragma omp parallel for schedule(static, 4096)
+        #pragma omp parallel for num_threads(6) schedule(static)
         for(code_t c = code_t(1) << (L - 1); code_t(c) < (code_t(1) << L); c += 2){
             check(L, c);
         }
     }
-#else
+#elif IMPL_RUN_STACK
     typedef unsigned int uint;
     typedef unsigned int run_len_t;
 
@@ -149,7 +149,6 @@ int main(){
 #endif
                 code |= (b << leading);
                 end |= (b << leading);
-//                #pragma omp parallel for schedule(static)
                 for(code_t c = code; c <= end; c += 2){
                     check(L, c);
                 }
@@ -177,7 +176,7 @@ int main(){
 #ifdef COUNT
         counter += ((end - code) >> 1) + 1;
 #endif
-#pragma omp parallel for
+        //#pragma omp parallel for
         for(code_t c = code; c <= end; c += 2){
             check(L, c);
         }
@@ -185,5 +184,91 @@ int main(){
         cout << "counter: " << counter << endl;
 #endif
     }
+#else
+    typedef unsigned int uint;
+    typedef unsigned int sub_code_t;
+
+    // this algorithm checks all cyclic-unique combinations which start with 1 except 101010101...
+    // note that by convention the constant sequence is not anti-cyclic
+    cout << "running stacked loop impl" << endl;
+#ifdef COUNT
+    uint64_t counter = 0;
+#endif
+    code_t code, end_code, prev_code;
+    for(uint L = minL; L <= maxL; L += 2){
+        cout << "L: " << L << endl;
+        for(uint leading = L/2 - 1; leading >= 2; leading--){
+            cout << "leading " << leading << endl;
+            uint remaining = L - leading - 1;
+            uint seqs = remaining/leading;
+            uint buffer_seq_len = remaining%leading;
+            sub_code_t mask = (sub_code_t(1) << leading) - 1;
+            code = mask;
+            code = code << (1 + buffer_seq_len); // we start with leading sequence followed by the zero and the buffer seq
+            sub_code_t buffer_end_exclusive = 1 << buffer_seq_len;
+            for(sub_code_t buffer_seq = 0; buffer_seq < buffer_end_exclusive; buffer_seq++){
+                uint start = 0;
+                if(buffer_seq == 0){
+                    start = sub_code_t(1) << buffer_seq_len; 
+                }else if((buffer_seq&1) == 0){
+                    start = sub_code_t(1) << (__builtin_ctz(buffer_seq) - 1);
+                }
+                code = ((((code >> buffer_seq_len) << buffer_seq_len) | buffer_seq) << leading) | start;
+                uint cur_pos = leading*(seqs - 1);
+                uint goup = 0;
+                do{
+                    prev_code = code >> leading;
+                    sub_code_t end = mask;
+                    if((prev_code&1) == 1){
+                        end -= sub_code_t(1) << (__builtin_ctz(~sub_code_t(prev_code)) - 1);
+                    }
+                    if(__builtin_expect(cur_pos == 0, 0)){
+                        if((code&1) == 1){
+                            code += 1; // round up if uneven, as all final codes must end with 0
+                        }
+                        end_code = (prev_code << leading) | end; // might end with 1, but we are using <= in the loop and not !=
+#ifdef COUNT
+                        counter += ((end_code - code) >> 1) + 1;
+#endif
+                        #pragma omp parallel for num_threads(6) schedule(static)
+                        for(code_t c = code; c <= end_code; c += 2){
+                            check(L, c);
+                        }
+                        cur_pos += leading;
+                        code = prev_code;
+                        goup = 1;
+                    }else{
+                        if(__builtin_expect((sub_code_t(code)&mask) == end, 0)){
+                            code = prev_code;
+                            cur_pos += leading;
+                            goup = 1;
+                        }else{
+                            code += goup;
+                            goup = 0;
+                            sub_code_t start = 0;
+                            if((code&1) == 0){
+                                start = start | (sub_code_t(1) << (__builtin_ctz(sub_code_t(code)) - 1));
+                            }
+                            code = (code << leading) | start;
+                            cur_pos -= leading;
+                        }
+                    }
+                }while(cur_pos < leading*seqs);
+            }
+        }
+        cout << "remaining" << endl;
+        code = ((code_t(1) << (L/2)) - 1) << L/2;
+        end_code = (code_t(1) << L) - 2;
+#ifdef COUNT
+        counter += ((end_code - code) >> 1) + 1;
+#endif
+        #pragma omp parallel for num_threads(6) schedule(static)
+        for(code_t c = code; c <= end_code; c += 2){
+            check(L, c);
+        }
+    }
+#ifdef COUNT
+    cout << "counter: " << counter << endl;
+#endif
 #endif
 }
