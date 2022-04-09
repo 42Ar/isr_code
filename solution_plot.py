@@ -101,5 +101,5 @@ for N in range(2, max_N+1):
 plt.clim(1)
 plt.xlabel("N")
 plt.ylabel("M")
-#plt.savefig("code_length_overview.pdf")
+plt.savefig("code_length_overview.pdf")
 plt.show()
