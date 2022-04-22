@@ -55,13 +55,11 @@ for line in f:
     print(f"N: {N:2d}, M: {M:2d} L: {L:2d}, runs: {len(res):2d}")
     sols.append((N, M, code))
 
-sols.append((9, 7, [], 58))
-sols.append((9, 6, [], 48))
-sols.append((9, 5, [], 48))
-sols.append((9, 4, [], 48))
-sols.append((10, 6, [], 48))
-sols.append((10, 5, [], 48))
+sols.append((9, 5, [], 58))
+sols.append((9, 6, [], 58))
 sols.append((10, 4, [], 48))
+sols.append((10, 5, [], 58))
+sols.append((10, 6, [], 58))
 
 max_N = max(t[0] for t in sols)
 max_M = max(t[1] for t in sols)
