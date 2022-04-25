@@ -29,14 +29,14 @@ __attribute__((optimize("unroll-loops"))) int main(){
         for(code_t c = 0; c < (code_t(1) << L); c++){
 restart_outer:
             for(code_len_t i = 1; i < L - 1; i += 2){
-                if(2*__builtin_popcountll(((c >> i) ^ c) & ((1 << (L - i)) - 1)) != L - i){
+                if(2*__builtin_popcountll(((c >> i) ^ c) & ((code_t(1) << (L - i)) - 1)) != L - i){
                     c++;
                     goto restart_outer;
                 }
             }
             int a = 0;
             for(code_len_t i = 2; i < L; i += 2){
-                a += abs(2*int(__builtin_popcountll(((c >> i) ^ c) & ((1 << (L - i)) - 1))) - (L - i));
+                a += abs(2*int(__builtin_popcountll(((c >> i) ^ c) & ((code_t(1) << (L - i)) - 1))) - (L - i));
             }
             if(a < best){
                 cc = c;
