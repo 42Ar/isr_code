@@ -16,34 +16,28 @@ def check_code(c, k, h, Delta):
              cc[L + j + Delta + h - k]*cc[L + j + h - k])
             for j in range(L))
     if r != 0:
-        print("code error:", h, Delta, ":", k)
+        raise RuntimeError("code error:", h, Delta, ":", k)
     return r
 
 
 def full_check(c, N, M):
-    err = 0
     for k in range(N):
         for h in range(N):
             if k != h:
                 for Delta in range(1, M+1):
-                    err += check_code(c, k, h, Delta)
-    print(err)
+                    check_code(c, k, h, Delta)
 
 sols = []
 f = open("brute_code/solution_summary")
 L_vals = set()
-golden_code = []
 for line in f:
     L = int(line.split(",")[1])
     N = int(line.split(",")[2])
     M = int(line.split(",")[3])
     c = line.split("[")[1].split("]")[0].split(",")
     code = [int(cc) for cc in c]
-    full_check(code, N, M-1)
+    full_check(code, N, M)
     assert len(code) == L
-    if N==8 and M==6:
-        golden_code = code
-        print(code)
     cur = code[0]
     res = [0]
     for c in code[1:]:
