@@ -50,10 +50,7 @@ for line in f:
     sols.append((N, M, code))
 
 sols.append((9, 5, [], 58))
-sols.append((9, 6, [], 58))
 sols.append((10, 4, [], 56))
-sols.append((10, 5, [], 58))
-sols.append((10, 6, [], 58))
 
 max_N = max(t[0] for t in sols)
 max_M = max(t[1] for t in sols)
