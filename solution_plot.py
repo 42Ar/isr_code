@@ -51,6 +51,7 @@ for line in f:
 
 sols.append((9, 5, [], 58))
 sols.append((10, 4, [], 56))
+sols.append((25, 1, [], 56))
 
 max_N = max(t[0] for t in sols)
 max_M = max(t[1] for t in sols)
@@ -71,7 +72,7 @@ c.sort()
 for N in range(2, max_N + 1):
     for M in range(1, max_M + 1):
         res_c[M-1, N-2] = c.index(res[M-1, N-2])
-cmap = plt.cm.get_cmap('tab10', len(L_vals))
+cmap = plt.cm.get_cmap('Set3', len(L_vals))
 cmap.set_under((0.9, 0.9, 0.9))
 plt.imshow(res_c, cmap=cmap, origin="lower", interpolation="none")
 plt.xticks(range(max_N-1), range(2, max_N + 1))
