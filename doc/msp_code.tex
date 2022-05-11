@@ -14,6 +14,8 @@
 \title{Radar code documentation}
 
 \DeclareMathOperator{\sgn}{sgn}
+\DeclareMathOperator{\Cov}{Cov}
+\renewcommand{\Re}{\mathrm{Re}}
 \renewcommand{\d}[1]{\ensuremath{\operatorname{d}\!{#1}}}
 \setlength\parindent{0pt}
 
@@ -80,6 +82,7 @@ which means that the result will be biased on average by
 \begin{equation}
 b^{(h)}_\Delta = \sum_{k=0,k\neq h}^{N-1}\frac{R^{(k)}_\Delta}{\sqrt{L}}
 \end{equation}
+However, one would use deconvolution (lag profile inversion) for a random code, this would remove the bias.
 
 \section{Optimizing the noise cancellation properties}
 The variance is calculated by
@@ -107,7 +110,8 @@ Calculating the remaining expectation values
 \end{equation}
 and substituting it into the previous expression result in
 \begin{equation}
-\mathrm{Var}[ \hat{R}^{(h)}_\Delta ] = \frac{1}{L^2}\sum^{L-1}_{j_1=0}\sum^{L-1}_{j_2=0}\sum_{k_1=0}^{N-1}\sum_{k_2=0}^{N-1}
+\mathrm{Var}[ \hat{R}^{(h)}_\Delta ] =
+\frac{1}{L^2}\sum^{L-1}_{j_1=0}\sum^{L-1}_{j_2=0}\sum_{k_1=0}^{N-1}\sum_{k_2=0}^{N-1}
 \hat{\epsilon}_{j_1}\hat{\epsilon}_{j_2} R_{|j_1-j_2|}^{(k_1)} R_{|j_1-j_2|}^{(k_2)}
 \end{equation}
 where
@@ -128,6 +132,95 @@ The design of a code with maximal noise suppression appears to depend on the mea
 All codes which fulfill the bias free condition yield basically the same amount of noise suppression and appear like a random code to the second term.
 This gives effectively a standard deviation proportional to $N/L^{3/2}$ because $R$ drops exponentially with increasing $j_2$.
 So a long code might be better than a short periodic one.
+
+\section{Covariance with correct calculation of real part - also use this for variance}
+
+\begin{equation}
+\left \langle
+\Re\left(\hat{R}^{(h)}_{\Delta_1}\right)
+\Re\left(\hat{R}^{(h)}_{\Delta_2}\right)
+\right \rangle =
+\frac{1}{L^2}\sum^{L-1}_{j_1=0}\sum^{L-1}_{j_2=0}
+\epsilon_{j_1} \epsilon_{j_1 + \Delta_1}
+\epsilon_{j_2} \epsilon_{j_2 + \Delta_2}
+\left\langle
+\Re\left(m_{j_1 + \Delta_1 + h} m_{j_1 + h}^*\right)
+\Re\left(m_{j_2 + \Delta_2 + h}^* m_{j_2 + h}\right)
+\right\rangle
+\end{equation}
+
+\begin{equation*}
+\begin{split}
+2\left\langle
+\Re\left(m_{j_1 + \Delta_1 + h}m_{j_1 + h}^*\right)
+\Re\left(m_{j_2 + \Delta_2 + h}^* m_{j_2 + h}\right)
+\right\rangle
+= \: &
+\Re\left(\left\langle m_{j_1 + \Delta_1 + h} m_{j_1 + h}^* m_{j_2 + \Delta_2 + h}^* m_{j_2 + h}\right\rangle\right)+ \\&
+\Re\left(\left\langle m_{j_1 + \Delta_1 + h}^* m_{j_1 + h} m_{j_2 + \Delta_2 + h}^* m_{j_2 + h}\right\rangle\right)
+\end{split}
+\end{equation*}
+
+plugged into the previous expression this gives
+
+\begin{equation*}
+\begin{split}
+\left \langle
+\Re\left(\hat{R}^{(h)}_{\Delta_1}\right)
+\Re\left(\hat{R}^{(h)}_{\Delta_2}\right)
+\right \rangle = \: &
+\frac{1}{2}\Re\left(\left\langle\hat{R}^{(h)}_{\Delta_1}\right\rangle^* \left\langle\hat{R}^{(h)}_{\Delta_2} \right\rangle\right)+
+\frac{1}{2}\Re\left(\left\langle\hat{R}^{(h)}_{\Delta_1}\right\rangle \left\langle\hat{R}^{(h)}_{\Delta_2} \right\rangle\right)+ \\&
+\frac{1}{2L^2}\sum^{L-1}_{j_1=0}\sum^{L-1}_{j_2=0}
+\epsilon_{j_1} \epsilon_{j_1 + \Delta_1}
+\epsilon_{j_2} \epsilon_{j_2 + \Delta_2}
+A
+\end{split}
+\end{equation*}
+
+\begin{equation*}
+A = \Re\left(\left
+\langle m_{j_2 + \Delta_2 + h}^* m_{j_1 + \Delta_1 + h} \rangle
+\langle m_{j_1 + h}^* m_{j_2 + h} \rangle
+\right\rangle\right) +
+\Re\left(\left
+\langle m_{j_1 + \Delta_1 + h}^* m_{j_2 + h} \rangle
+\langle m_{j_2 + \Delta_2 + h}^* m_{j_1 + h} \rangle
+\right\rangle\right)
+\end{equation*}
+
+
+\begin{equation*}
+\Cov\left[
+\Re\left( \hat{R}^{(h)}_{\Delta_1} \right),
+\Re\left( \hat{R}^{(h)}_{\Delta_2} \right)
+\right] = \frac{1}{2L^2}\sum^{L-1}_{j_1=0}\sum^{L-1}_{j_2=0}
+\epsilon_{j_1} \epsilon_{j_1 + \Delta_1}
+\epsilon_{j_2} \epsilon_{j_2 + \Delta_2}
+A
+\end{equation*}
+
+\begin{equation*}
+\hat{\epsilon}_{j, \Delta, l_1, l_2} = \epsilon_j \epsilon_{j + \Delta} \epsilon_{j + h - l_2} \epsilon_{j + \Delta + h - l_1}
+\end{equation*}
+
+\begin{equation*}
+\Cov\left[
+\Re\left( \hat{R}^{(h)}_{\Delta_1} \right),
+\Re\left( \hat{R}^{(h)}_{\Delta_2} \right)
+\right] = \frac{1}{2L^2}
+\sum^{L-1}_{j_1=0}\sum^{L-1}_{j_2=0}
+\sum_{k_1=0}^{N-1}\sum_{k_2=0}^{N-1}\left(A+B\right)
+\end{equation*}
+
+\begin{align}
+A &= \hat{\epsilon}_{j_1, \Delta_1, k_1, k_2}\hat{\epsilon}_{j_2, \Delta_2, k_1, k_2}
+\Re\left( R^{(k_1)}_{j_2 - j_1 + \Delta_2 - \Delta_1}R^{(k_2)}_{j_2 - j_1} \right)\\
+B &= \hat{\epsilon}_{j_1, \Delta_1, k_1, k_2}\hat{\epsilon}_{j_2, \Delta_2, k_2, k_1}
+\Re\left( R^{(k_1)}_{j_1 - j_2 + \Delta_1}R^{(k_2)}_{j_2 - j_1 + \Delta_2} \right)
+\end{align}
+
+
 
 \section{Solving the code condition}
 The condition given by \eqref{eq:cond} is trivially fulfilled for pseudo random numbers if $L \rightarrow \infty$.
@@ -298,6 +391,15 @@ followed by an uneven number of runs
 511111
 5311
 
+5 3 2 5 4
+
+for s >= 0:
+5: -min(s, 3)
+3: -min(s, 2)
+2: -min(s, 2)
+4: -min(s, 4) + min(s - 5, 0)
+
+
 \begin{equation}
 a_{i_1}b_{i_2}a_{i_1+j}b_{i_2+j}
 \end{equation}
@@ -325,8 +427,9 @@ W = \sum_{i=1}^{L} \epsilon_i \leq (s_j + L)/2
 \end{equation}
 
 \section{Modulating the code}
-\subsection{Modulation with fixed code}
-
+\subsection{Modulation with fixed code, match filter on pulse, ignoring voltage changes}
+In the following it is considered that the recieved modulated voltage is demodulated first with an inverse filter and then correlated.
+This leads to a nice analytical expression, but only if the voltage during one pulse is condidered constant, which is wrong...
 \begin{figure}
 	\centering
 	\includegraphics[width=1\linewidth]{code_diagram_modulated.pdf}
@@ -339,6 +442,10 @@ m_{i,w} = \sum_{k=0}^{N-1} \epsilon_{i-k} \sum_{s=0}^{S-1} \gamma_{S-1-s} V^{(k,
 \begin{equation}
 d_{i,w} = \sum^{S-1}_{s=0} \gamma_{s} m_{i, s + w}
 \end{equation}
+\begin{equation}
+w \in [0, K - S]
+\end{equation}
+Where $K$ is the number of bits received.
 \begin{equation}
 d_{i,w} = \sum_{k=0}^{N-1}\epsilon_{i-k} \sum_{s_1=0}^{S-1} \sum^{S-1}_{s_2=0} \gamma_{s_2} \gamma_{S-1-s_1} V_i^{(k, s_1 + s_2 + w)}
 \end{equation}
@@ -359,7 +466,7 @@ d_{i,w} = \sum_{k=0}^{N-1}\epsilon_{i-k}\sum_{s=1-S}^{S-1} A_{|s|} V_i^{(k, S - 
 \begin{equation}
 \hat{R}^{(h, w)}_\Delta = \frac{1}{L}\sum^{L-1}_{j=0}
 \epsilon_{j + \Delta}d_{j + \Delta + h, w}^*
-\epsilon_jd_{j + h, w}.
+\epsilon_jd_{j + h, w}
 \end{equation}
 \begin{equation}
 \hat{R}^{(h, w)}_\Delta = \frac{1}{L}\sum^{L-1}_{j=0}
@@ -387,7 +494,7 @@ d_{i,w} = \sum_{k=0}^{N-1}\epsilon_{i-k}\sum_{s=1-S}^{S-1} A_{|s|} V_i^{(k, S - 
 \frac{1}{2}\sum_{s_1=1-S}^{S-2} A_{|s_1|}A_{|s_1+1|}R_\Delta^{(h, S-1+s_1+w+0.5)}+
 \frac{1}{2}\sum_{s_1=2-S}^{S-1} A_{|s_1|}A_{|s_1-1|}R_\Delta^{(h, S-1+s_1+w-0.5)}
 \end{equation}
-if $\gamma$ is a barker code we have $A_{|i|}A_{|i+1|}=0$
+if $\gamma$ is a Barker code we have $A_{|i|}A_{|i+1|}=0$
 \begin{equation}
 \langle \hat{R}^{(h, w)}_\Delta \rangle =
 \sum_{s_1=1-S}^{S-1} A^2_{|s_1|}R_\Delta^{(h, S-1+s_1+w)}
@@ -398,8 +505,165 @@ so we find a biased estimator, where the signal is stronger by a factor
 \end{equation}
 compared to the bias.
 one can also deconvolute, to find an exact result.
-\subsection{Modulation with variable code}
-\subsection{Hypothesis on code length}
+
+\subsection{Modulation with fixed code, match filter on pulse}
+\begin{equation}
+m_{i,w} = \sum_{k=0}^{N-1} \epsilon_{i-k} \sum_{s=0}^{S-1} \gamma_{S-1-s} V^{(k, s + w)}_{i, w}
+\end{equation}
+\begin{equation}
+d_{i,w} = \sum^{S-1}_{s=0} \gamma_{s} m_{i, s + w}
+\end{equation}
+\begin{equation}
+w \in [0, K - S]
+\end{equation}
+Where $K$ is the number of bits received.
+\begin{equation}
+d_{i,w} = \sum_{k=0}^{N-1}\epsilon_{i-k} \sum_{s_1=0}^{S-1} \sum^{S-1}_{s_2=0} \gamma_{s_2} \gamma_{S-1-s_1} V_{i,w+s_2}^{(k, s_1 + s_2 + w)}
+\end{equation}
+
+\begin{equation}
+d_{i,w} = \sum_{k=0}^{N-1}\epsilon_{i-k} \sum_{s_1=0}^{S-1} \sum^{S-1}_{s_2=0} \gamma_{s_1} \gamma_{s_2} V_{i,w+s_2}^{(k, S - 1 - s_1 + s_2 + w)}
+\end{equation}
+In order to get rid of half overlapping range gates we use
+\begin{equation}
+V^{(k,s)}_{i,w} = X^{(L, k, s)}_{i,w} + X^{(U, k, s + 1)}_{i,w}
+\end{equation}
+with
+\begin{equation}
+\left\langle \left( X^{(z_1, k, s_1)}_{i_1,w_1} \right)^* X^{(z_2, k, s_2)}_{i_2,w_2} \right\rangle = \delta_{s_1,s_2}G^{(z_1, z_2, k, s_1)}_{\Delta, w_1 - w_2}
+\end{equation}
+with this we have
+\begin{align}
+\left \langle \left(V_{i_1,w_1+s_2}^{(k, S - 1 - s_1 + s_2 + w_1)} \right)^* V_{i_2,w_2+s_4}^{(k, S - 1 - s_3 + s_4 + w_2)} \right\rangle =\\
+G^{(L, L, S-1-s_1+s_2+w_1)}_{\Delta, w_1 - w_2 + s_2 - s_4} \delta_{s_2 - s_1 + w_1, s_4 - s_3 + w_2}\\
++G^{(U, U, S-s_1+s_2+w_1)}_{\Delta, w_1 - w_2 + s_2 - s_4} \delta_{s_2 - s_1 + w_1, s_4 - s_3 + w_2}\\
++G^{(L, U, S-1-s_1+s_2+w_1)}_{\Delta, w_1 - w_2 + s_2 - s_4} \delta_{s_2 - s_1 + w_1, s_4 - s_3 + w_2 + 1}\\
++G^{(U, L, S-s_1+s_2+w_1)}_{\Delta, w_1 - w_2 + s_2 - s_4} \delta_{s_2 - s_1 + w_1 + 1, s_4 - s_3 + w_2}
+\end{align}
+\begin{align}
+\left \langle \left(V_{i_1,w_1}^{(k, s_1)} \right)^* V_{i_2,w_2}^{(k, s_2)} \right\rangle=
+\left( G^{(L, L, s_1)}_{\Delta, \delta} + G^{(U, U, s_1 + 1)}_{\Delta, \delta} \right) \delta_{s_1, s_2} + G^{(L, U, s_1)}_{\Delta, \delta} \delta_{s_1, s_2 + 1} + G^{(U, L, s_1 + 1)}_{\Delta, \delta} \delta_{s_1 + 1, s_2}
+\end{align}
+
+
+we see that
+\begin{equation}
+\left( G^{(z_1, z_2, k, s_1)}_{i, w_1 - w_2} \right)^* = G^{(z_2, z_1, k, s_1)}_{i, w_1 - w_2}
+\end{equation}
+using this we have
+\begin{align}
+\left \langle \left(V_{i_1,w_1+s_2}^{(k, S - 1 - s_1 + s_2 + w_1)} \right)^* V_{i_2,w_2+s_4}^{(k, S - 1 - s_3 + s_4 + w_2)} \right\rangle =\\
+\left( G^{(U, U, S-s_1+s_2+w_1)}_{\Delta, w_1 - w_2 + s_2 - s_4} + G^{(L, L, S-1-s_1+s_2+w_1)}_{\Delta, w_1 - w_2 + s_2 - s_4} \right) \delta_{s_2 - s_1 + w_1, s_4 - s_3 + w_2}\\
++G^{(L, U, S-1-s_1+s_2+w_1)}_{\Delta, w_1 - w_2 + s_2 - s_4} \delta_{s_2 - s_1 + w_1, s_4 - s_3 + w_2 + 1}\\
++\left( G^{(L, U, S-s_1+s_2+w_1)}_{\Delta, w_1 - w_2 + s_2 - s_4} \right)^* \delta_{s_2 - s_1 + w_1 + 1, s_4 - s_3 + w_2}
+\end{align}
+\subsection{Modulation with fixed code, decoding first}
+\begin{equation}
+\langle m_{i_1, w_1}^* m_{i_2, w_2}\rangle = \sum_{s_1=0}^{S-1}\sum_{s_2=0}^{S-1} \gamma_{s_1} \gamma_{s_2} \left\langle \left( V^{(k, S-1-s_1 + w_1)}_{i_1, w_1} \right)^* V^{(k, S-1-s_2 + w_2)}_{i_2, w_2} \right \rangle
+\end{equation}
+
+\subsection{Modulation with alternating code}
+\begin{equation}
+m_{i,w} = \sum_{k=0}^{N-1} \epsilon_{i-k} \sum_{s=0}^{S-1} \gamma^{(k)}_{S-1-s} V^{(k, s + w)}_{i}
+\end{equation}
+\begin{equation}
+\hat{R}^{(h, w)}_\Delta = \frac{1}{L}\sum^{L-1}_{j=0}
+\epsilon_{j + \Delta}m_{j + \Delta + h, w}^*
+\epsilon_jm_{j + h, w}
+\end{equation}
+
+\begin{equation}
+\langle \hat{R}^{(h, w)}_\Delta \rangle = \frac{1}{L}
+\sum_{s_1=0}^{S-1}
+\sum_{s_2=0}^{S-1}
+\sum^{L-1}_{j=0}
+\sum_{k=0}^{N-1}
+\epsilon_{j + \Delta}
+\epsilon_{j + \Delta + h - k}\gamma^{(j + \Delta + h - k)}_{S-1-s_1}
+\epsilon_j
+\epsilon_{i - k} \gamma^{(j + h - k)}_{S-1-s_2}
+\langle \left(V^{(k, s_1 + w)}_{j + \Delta + h}\right)^* V^{(k, s_2 + w)}_{j+h} \rangle
+\end{equation}
+
+
+\section{The alternating codes}
+\subsection{Short lags expectation value}
+\begin{equation}
+m^{(c)}_j = \sum_{i=0}^{B-1} \epsilon^{(c)}_i V^{(c)}_{i,j} + \xi^{(c)}_j
+\end{equation}
+\begin{equation}
+\hat{R}^{(h(j_1 - k_1)}_\Delta = \frac{1}{M} \sum_{c=0}^{M-1} \epsilon^{(c)}_{k_1} \epsilon^{(c)}_{k_2} \left(m^{(c)}_{j_1}\right)^* m^{(c)}_{j_2}
+\end{equation}
+\begin{equation}
+\left\langle \hat{R}^{(j_1 - k_1)}_\Delta \right\rangle =
+\frac{1}{M} \sum_{c=0}^{M-1} \epsilon^{(c)}_{k_1} \epsilon^{(c)}_{k_2} \left\langle \left(m^{(c)}_{j_1}\right)^* m^{(c)}_{j_2} \right\rangle =
+\frac{1}{M} \sum_{i_1=0}^{B-1} \sum_{i_2=0}^{B-1} \sum_{c=0}^{M-1} \epsilon^{(c)}_{k_1} \epsilon^{(c)}_{k_2} \epsilon^{(c)}_{i_1}\epsilon^{(c)}_{i_2} \left\langle \left( V^{(c)}_{i_1,j_1}\right)^* V^{(c)}_{i_2,j_2} \right\rangle
+\end{equation}
+\begin{equation}
+\Delta = k_1 - k_2 = j_1 - j_2 > 0
+\end{equation}
+\subsection{Long lags expectation value}
+\begin{equation}
+m^{(c)}_j = \sum_{i=0}^{B-1} \epsilon^{(c)}_i V^{(c)}_{i,j} + \xi^{(c)}_j
+\end{equation}
+\begin{equation}
+\hat{R}^{(h(j_1 - k_1)}_\Delta = \frac{1}{M} \sum_{c=0}^{M-1} \epsilon^{(c)}_{k_1} \epsilon^{(c+1)}_{k_2} \left(m^{(c)}_{j_1}\right)^* m^{(c+1)}_{j_2}
+\end{equation}
+\begin{equation}
+\left\langle \hat{R}^{(j_1 - k_1)}_\Delta \right\rangle =
+\frac{1}{M} \sum_{c=0}^{M-1} \epsilon^{(c)}_{k_1} \epsilon^{(c+1)}_{k_2} \left\langle \left(m^{(c)}_{j_1}\right)^* m^{(c+1)}_{j_2} \right\rangle =
+\frac{1}{M} \sum_{i_1=0}^{B-1} \sum_{i_2=0}^{B-1} \sum_{c=0}^{M-1} \epsilon^{(c)}_{k_1} \epsilon^{(c+1)}_{k_2} \epsilon^{(c)}_{i_1}\epsilon^{(c+1)}_{i_2} \left\langle \left( V^{(c)}_{i_1,j_1}\right)^* V^{(c+1)}_{i_2,j_2} \right\rangle
+\end{equation}
+\begin{equation}
+\Delta = k_1 - k_2 = j_1 - j_2 > 0
+\end{equation}
+
+\subsection{Bias}
+the estimator is biased, due to signals coming from higher altitudes, which are caused by the pulse $c-1$
+\begin{equation}
+\left\langle \hat{R}^{(j_1 - k_1)}_\Delta \right\rangle =
+\frac{1}{M} \sum_{i_1=0}^{B-1} \sum_{i_2=0}^{B-1} \sum_{c=0}^{M-1} \epsilon^{(c)}_{k_1} \epsilon^{(c)}_{k_2} \epsilon^{(c-1)}_{i_1}\epsilon^{(c-1)}_{i_2} \left\langle \left( V^{(c-1, 1)}_{i_1,j_1}\right)^* V^{(c-1, 1)}_{i_2,j_2} \right\rangle
+\end{equation}
+SPECULATION: as the product of codes is random, we do not expect constant $1$ but $0$ with standard deviation of $1/\sqrt{B}$ for all indices for which the expectation value is not zero.
+the additional (implicit) averaging over $B$ will contribute another factor $1/\sqrt{B}$
+
+\subsection{Variance}
+\begin{equation}
+\left\langle \left| \hat{R}^{(j_1 - k_1)}_\Delta \right|^2 \right\rangle =
+\frac{1}{M^2} \sum_{c_1=0}^{M-1} \sum_{c_2=0}^{M-1}
+\epsilon^{(c_1)}_{k_1} \epsilon^{(c_1)}_{k_2}
+\epsilon^{(c_2)}_{k_1} \epsilon^{(c_2)}_{k_2}
+\left\langle
+m^{(c_1)}_{j_1} \left( m^{(c_1)}_{j_2}\right)^*
+\left(m^{(c_2)}_{j_1}\right)^* m^{(c_2)}_{j_2}
+\right\rangle
+\end{equation}
+\begin{equation}
+\mathrm{Var}\left[\hat{R}^{(j_1 - k_1)}_\Delta \right] =
+\frac{1}{M^2} \sum_{c_1=0}^{M-1} \sum_{c_2=0}^{M-1}
+\epsilon^{(c_1)}_{k_1} \epsilon^{(c_1)}_{k_2}
+\epsilon^{(c_2)}_{k_1} \epsilon^{(c_2)}_{k_2}
+\left\langle m^{(c_1)}_{j_1} \left(m^{(c_2)}_{j_1}\right)^* \right\rangle
+\left\langle \left(m^{(c_1)}_{j_2}\right)^* m^{(c_2)}_{j_2} \right\rangle
+\end{equation}
+\begin{equation}
+\mathrm{Var}\left[\hat{R}^{(j_1 - k_1)}_\Delta \right] \approx \frac{1}{M}
+\left\langle m^{(c)}_{j_1} \left(m^{(c)}_{j_1}\right)^* \right\rangle
+\left\langle \left(m^{(c)}_{j_2}\right)^* m^{(c)}_{j_2} \right\rangle
+\end{equation}
+\begin{equation}
+\left\langle \left(m^{(c)}_j\right)^* m^{(c)}_j \right\rangle = \sum_{i_1=0}^{B-1} \sum_{i_2=0}^{B-1} \epsilon^{(c)}_{i_1} \epsilon^{(c)}_{i_2} \left\langle V^{(c)}_{i_1,j}\left(V^{(c)}_{i_2,j}\right)^*\right\rangle + P_n \approx BP + P_n
+\end{equation}
+\begin{equation}
+\mathrm{Var}\left[\hat{R}^{(j_1 - k_1)}_\Delta \right] = \frac{(BP + P_n)^2}{M}
+\end{equation}
+
+
+
+
+
+
+\section{Hypothesis on code length}
 \section{Code with cyclic difference set for $\tau_i$}
 \section{Simulation}
 \subsection{Monte Carlo Generation}
