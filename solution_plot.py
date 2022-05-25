@@ -51,8 +51,10 @@ for line in f:
 
 sols.append((9, 5, [], 58))
 sols.append((10, 4, [], 56))
-sols.append((25, 1, [], 56))
+sols.append((24, 1, [], 56))
 sols.append((8, 7, [], 56))
+sols.append((14, 2, [], 56))
+sols.append((12, 3, [], 56))
 
 max_N = max(t[0] for t in sols)
 max_M = max(t[1] for t in sols)
